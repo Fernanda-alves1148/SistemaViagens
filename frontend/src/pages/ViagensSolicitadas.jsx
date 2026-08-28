@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import Header from "../components/Header";
 import Navbar from "../components/Navbar";
@@ -8,7 +9,15 @@ import {
     viagensSolicitadas
 } from "../data/viagensMock";
 
+function formatarData(data) {
+    const [ano, mes, dia] = data.split("-");
+
+    return `${dia}/${mes}/${ano}`;
+}
+
 function ViagensSolicitadas() {
+
+    const navigate = useNavigate();
 
     const [
         justificativaSelecionada,
@@ -16,106 +25,238 @@ function ViagensSolicitadas() {
     ] = useState(null);
 
     return (
-        <>
-            <Header />
+        <div className="app">
 
             <Navbar />
 
-            <main className="container">
+            <div className="main-area">
 
-                <h2>
-                    Viagens solicitadas
-                </h2>
+                <Header />
 
-                <table>
+                <main className="content">
 
-                    <thead>
+                    <section className="welcome">
 
-                        <tr>
-                            <th>Data de início</th>
-                            <th>Data de fim</th>
-                            <th>Origem</th>
-                            <th>Destino</th>
-                            <th>Meio de transporte</th>
-                            <th>Status</th>
-                        </tr>
+                        <div>
 
-                    </thead>
+                            <span className="welcome-small">
+                                SOLICITAÇÕES
+                            </span>
 
-                    <tbody>
+                            <h2>
+                                Minhas viagens solicitadas
+                            </h2>
 
-                        {viagensSolicitadas.map(
-                            (viagem) => (
+                            <p>
+                                Acompanhe o andamento
+                                das suas solicitações.
+                            </p>
 
-                                <tr
-                                    key={viagem.id}
-                                >
+                        </div>
 
-                                    <td>
-                                        {viagem.dataInicio}
-                                    </td>
+                    </section>
 
-                                    <td>
-                                        {viagem.dataFim}
-                                    </td>
 
-                                    <td>
-                                        {viagem.origem}
-                                    </td>
+                    <section className="section">
 
-                                    <td>
-                                        {viagem.destino}
-                                    </td>
+                        <div className="section-header">
 
-                                    <td>
-                                        {viagem.transportes.join(
-                                            ", "
-                                        )}
-                                    </td>
+                            <div>
 
-                                    <td>
+                                <h3>
+                                    Solicitações
+                                </h3>
 
-                                        {viagem.status ===
-                                        "REJEITADA" ? (
+                                <p>
+                                    Consulte o status
+                                    das viagens enviadas.
+                                </p>
 
-                                            <button
-                                                className="status rejeitada"
+                            </div>
+
+                        </div>
+
+
+                        <div className="table-container">
+
+                            <table>
+
+                                <thead>
+
+                                    <tr>
+
+                                        <th>
+                                            Viagem
+                                        </th>
+
+                                        <th>
+                                            Período
+                                        </th>
+
+                                        <th>
+                                            Transporte
+                                        </th>
+
+                                        <th>
+                                            Status
+                                        </th>
+
+                                    </tr>
+
+                                </thead>
+
+
+                                <tbody>
+
+                                    {viagensSolicitadas.map(
+                                        (viagem) => (
+
+                                            <tr
+                                                key={
+                                                    viagem.id
+                                                }
+
+                                                className="linha-clicavel"
+
                                                 onClick={() =>
-                                                    setJustificativaSelecionada(
-                                                        viagem.justificativa
+                                                    navigate(
+                                                        `/viagem/${viagem.id}`
                                                     )
                                                 }
                                             >
-                                                Rejeitada
-                                            </button>
 
-                                        ) : viagem.status ===
-                                          "ACEITA" ? (
+                                                <td>
 
-                                            <span className="status aceita">
-                                                Aceita
-                                            </span>
+                                                    <div className="viagem-cell">
 
-                                        ) : (
+                                                        <div className="viagem-icon">
+                                                            →
+                                                        </div>
 
-                                            <span className="status analise">
-                                                Em análise
-                                            </span>
+                                                        <div>
 
-                                        )}
+                                                            <strong>
+                                                                {
+                                                                    viagem.origem
+                                                                }
 
-                                    </td>
+                                                                {" → "}
 
-                                </tr>
+                                                                {
+                                                                    viagem.destino
+                                                                }
+                                                            </strong>
 
-                            )
-                        )}
+                                                            <span>
+                                                                Viagem #
+                                                                {
+                                                                    viagem.id
+                                                                }
+                                                            </span>
 
-                    </tbody>
+                                                        </div>
 
-                </table>
+                                                    </div>
 
-            </main>
+                                                </td>
+
+
+                                                <td>
+
+                                                    <strong>
+                                                        {
+                                                            formatarData(
+                                                                viagem.dataInicio
+                                                            )
+                                                        }
+                                                    </strong>
+
+                                                    <span className="texto-suave">
+                                                        {" "}até{" "}
+                                                        {
+                                                            formatarData(
+                                                                viagem.dataFim
+                                                            )
+                                                        }
+                                                    </span>
+
+                                                </td>
+
+
+                                                <td>
+                                                    {
+                                                        viagem.transportes.join(
+                                                            ", "
+                                                        )
+                                                    }
+                                                </td>
+
+
+                                                <td>
+
+                                                    {viagem.status ===
+                                                    "REJEITADA" ? (
+
+                                                        <button
+                                                            type="button"
+                                                            className="status rejeitada status-button"
+                                                            onClick={(event) => {
+
+                                                                /*
+                                                                 * O botão de rejeitada
+                                                                 * não deve abrir os detalhes.
+                                                                 */
+
+                                                                event.stopPropagation();
+
+                                                                setJustificativaSelecionada(
+                                                                    viagem.justificativa
+                                                                );
+                                                            }}
+                                                        >
+                                                            Rejeitada
+                                                        </button>
+
+                                                    ) : viagem.status ===
+                                                      "ACEITA" ? (
+
+                                                        <span className="status aceita">
+                                                            Aceita
+                                                        </span>
+
+                                                    ) : (
+
+                                                        <span className="status analise">
+                                                            Em análise
+                                                        </span>
+
+                                                    )}
+
+                                                </td>
+
+                                            </tr>
+
+                                        )
+                                    )}
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+
+                        <p className="texto-ajuda">
+                            Clique em uma viagem para visualizar
+                            seus detalhes.
+                        </p>
+
+                    </section>
+
+                </main>
+
+            </div>
+
 
             {justificativaSelecionada && (
 
@@ -136,7 +277,7 @@ function ViagensSolicitadas() {
 
             )}
 
-        </>
+        </div>
     );
 }
 

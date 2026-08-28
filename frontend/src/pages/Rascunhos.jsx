@@ -4,128 +4,341 @@ import { useState } from "react";
 import Header from "../components/Header";
 import Navbar from "../components/Navbar";
 
-import { viagensRascunho as dadosIniciais } from "../data/viagensMock";
+import {
+viagensRascunho as dadosIniciais,
+viagensSolicitadas
+} from "../data/viagensMock";
+
+function formatarData(data) {
+const [ano, mes, dia] = data.split("-");
+
+
+return `${dia}/${mes}/${ano}`;
+
+
+}
 
 function Rascunhos() {
+const navigate = useNavigate();
 
-    const navigate = useNavigate();
 
-    const [viagens, setViagens] = useState(dadosIniciais);
+const [viagens, setViagens] =
+    useState(dadosIniciais);
 
-    function excluirViagem(id, event) {
+const quantidadeRascunhos =
+    viagens.length;
 
-        event.stopPropagation();
+const quantidadeAnalise =
+    viagensSolicitadas.filter(
+        (viagem) =>
+            viagem.status === "EM_ANALISE"
+    ).length;
 
-        const confirmacao = window.confirm(
-            "Deseja realmente excluir esta viagem?"
-        );
+const quantidadeAceitas =
+    viagensSolicitadas.filter(
+        (viagem) =>
+            viagem.status === "ACEITA"
+    ).length;
 
-        if (!confirmacao) {
-            return;
-        }
+const quantidadeRejeitadas =
+    viagensSolicitadas.filter(
+        (viagem) =>
+            viagem.status === "REJEITADA"
+    ).length;
 
-        setViagens(
-            viagens.filter((viagem) => viagem.id !== id)
-        );
+function excluirViagem(id, event) {
+    event.stopPropagation();
+
+    const confirmacao = window.confirm(
+        "Deseja realmente excluir esta viagem?"
+    );
+
+    if (!confirmacao) {
+        return;
     }
 
-    return (
-        <>
+    setViagens(
+        viagens.filter(
+            (viagem) =>
+                viagem.id !== id
+        )
+    );
+}
+
+return (
+    <div className="app">
+
+        <Navbar />
+
+        <div className="main-area">
+
             <Header />
 
-            <Navbar />
+            <main className="content">
 
-            <main className="container">
+                <section className="welcome">
 
-                <div className="pagina-cabecalho">
+                    <div>
+                        <span className="welcome-small">
+                            PAINEL PRINCIPAL
+                        </span>
 
-                    <h2>Viagens em rascunho</h2>
+                        <h2>
+                            Olá, Fernanda!
+                        </h2>
+
+                        <p>
+                            Acompanhe suas viagens,
+                            solicitações e despesas.
+                        </p>
+                    </div>
 
                     <button
-                        onClick={() => navigate("/nova-viagem")}
+                        className="botao-destaque"
+                        onClick={() =>
+                            navigate("/nova-viagem")
+                        }
                     >
-                        Nova viagem
+                        + Nova viagem
                     </button>
 
-                </div>
+                </section>
 
-                <table>
 
-                    <thead>
-                        <tr>
-                            <th>Data de início</th>
-                            <th>Data de fim</th>
-                            <th>Origem</th>
-                            <th>Destino</th>
-                            <th>Meio de transporte</th>
-                            <th>Status</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
+                <section className="cards">
 
-                    <tbody>
+                    <div className="summary-card">
 
-                        {viagens.map((viagem) => (
+                        <div className="summary-icon olive">
+                            ◫
+                        </div>
 
-                            <tr
-                                key={viagem.id}
-                                className="linha-clicavel"
-                                onClick={() =>
-                                    navigate(`/viagem/${viagem.id}`)
-                                }
-                            >
+                        <div>
+                            <strong>
+                                {quantidadeRascunhos}
+                            </strong>
 
-                                <td>
-                                    {viagem.dataInicio}
-                                </td>
+                            <span>
+                                Rascunhos
+                            </span>
+                        </div>
 
-                                <td>
-                                    {viagem.dataFim}
-                                </td>
+                    </div>
 
-                                <td>
-                                    {viagem.origem}
-                                </td>
 
-                                <td>
-                                    {viagem.destino}
-                                </td>
+                    <div className="summary-card">
 
-                                <td>
-                                    {viagem.transportes.join(", ")}
-                                </td>
+                        <div className="summary-icon orange">
+                            ◷
+                        </div>
 
-                                <td>
-                                    Em rascunho
-                                </td>
+                        <div>
+                            <strong>
+                                {quantidadeAnalise}
+                            </strong>
 
-                                <td>
+                            <span>
+                                Em análise
+                            </span>
+                        </div>
 
-                                    <button
-                                        className="botao-excluir"
-                                        onClick={(event) =>
-                                            excluirViagem(
-                                                viagem.id,
-                                                event
-                                            )
-                                        }
-                                    >
-                                        🗑
-                                    </button>
+                    </div>
 
-                                </td>
 
-                            </tr>
+                    <div className="summary-card">
 
-                        ))}
+                        <div className="summary-icon green">
+                            ✓
+                        </div>
 
-                    </tbody>
+                        <div>
+                            <strong>
+                                {quantidadeAceitas}
+                            </strong>
 
-                </table>
+                            <span>
+                                Aceitas
+                            </span>
+                        </div>
+
+                    </div>
+
+
+                    <div className="summary-card">
+
+                        <div className="summary-icon red">
+                            !
+                        </div>
+
+                        <div>
+                            <strong>
+                                {quantidadeRejeitadas}
+                            </strong>
+
+                            <span>
+                                Rejeitadas
+                            </span>
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <section className="section">
+
+                    <div className="section-header">
+
+                        <div>
+                            <h3>
+                                Viagens em rascunho
+                            </h3>
+
+                            <p>
+                                Solicitações que ainda
+                                não foram enviadas.
+                            </p>
+                        </div>
+
+                        <button
+                            className="botao-link"
+                            onClick={() =>
+                                navigate(
+                                    "/viagens-solicitadas"
+                                )
+                            }
+                        >
+                            Ver solicitações →
+                        </button>
+
+                    </div>
+
+
+                    <div className="table-container">
+
+                        <table>
+
+                            <thead>
+                                <tr>
+                                    <th>Viagem</th>
+                                    <th>Período</th>
+                                    <th>Transporte</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {viagens.map(
+                                    (viagem) => (
+
+                                        <tr
+                                            key={viagem.id}
+                                            className="linha-clicavel"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/viagem/${viagem.id}`
+                                                )
+                                            }
+                                        >
+
+                                            <td>
+
+                                                <div className="viagem-cell">
+
+                                                    <div className="viagem-icon">
+                                                        →
+                                                    </div>
+
+                                                    <div>
+
+                                                        <strong>
+                                                            {viagem.origem}
+                                                            {" → "}
+                                                            {viagem.destino}
+                                                        </strong>
+
+                                                        <span>
+                                                            Viagem #
+                                                            {viagem.id}
+                                                        </span>
+
+                                                    </div>
+
+                                                </div>
+
+                                            </td>
+
+                                            <td>
+
+                                                <strong>
+                                                    {formatarData(
+                                                        viagem.dataInicio
+                                                    )}
+                                                </strong>
+
+                                                <span className="texto-suave">
+                                                    {" "}até{" "}
+                                                    {formatarData(
+                                                        viagem.dataFim
+                                                    )}
+                                                </span>
+
+                                            </td>
+
+                                            <td>
+                                                {viagem.transportes.join(
+                                                    ", "
+                                                )}
+                                            </td>
+
+                                            <td>
+
+                                                <span className="status rascunho">
+                                                    Rascunho
+                                                </span>
+
+                                            </td>
+
+                                            <td>
+
+                                                <button
+                                                    type="button"
+                                                    className="botao-excluir"
+                                                    onClick={(event) =>
+                                                        excluirViagem(
+                                                            viagem.id,
+                                                            event
+                                                        )
+                                                    }
+                                                >
+                                                    🗑
+                                                </button>
+
+                                            </td>
+
+                                        </tr>
+
+                                    )
+                                )}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </section>
 
             </main>
-        </>
-    );
+
+        </div>
+
+    </div>
+);
+
+
 }
 
 export default Rascunhos;
