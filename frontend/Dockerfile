@@ -1,24 +1,20 @@
-
-FROM node:18-alpine
-
+FROM node:22-alpine AS construcao
 
 WORKDIR /app
 
+COPY package.json package-lock.json ./
 
-COPY package*.json ./
-
-
-RUN npm install
-
+RUN npm ci
 
 COPY . .
 
+RUN npm run build
 
-EXPOSE 3000
+FROM nginx:alpine
 
+COPY --from=construcao /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-ENV CHOKIDAR_USEPOLLING=true
-ENV WATCHPACK_POLLING=true
+EXPOSE 80
 
-
-CMD ["npm", "start"]
+CMD ["nginx", "-g", "daemon off;"]

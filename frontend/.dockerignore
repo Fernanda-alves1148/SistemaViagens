@@ -1,6 +1,4 @@
-node_modules
-build
-.git
-.gitignore
-README.md
-.env
+node_modules/
+dist/
+.vscode/
+*.log
