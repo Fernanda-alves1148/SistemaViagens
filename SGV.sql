@@ -72,17 +72,18 @@ SELECT * FROM endereco;
 -- Ator da Sprint
 
 CREATE TABLE responsavel (
-    idResponsavel SERIAL PRIMARY KEY,
+    matricula SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
 	CPF VARCHAR(20) NOT NULL,
 	nro INT NOT NULL,
 	complemento VARCHAR(20) NOT NULL,
+	setor VARCHAR(20) NOT NULL,
 	idEndereco INT REFERENCES endereco(idEndereco)
 );
-INSERT INTO responsavel (idResponsavel, nome, CPF, nro, complemento, idEndereco) 
+INSERT INTO responsavel (matricula, nome, CPF, nro, complemento, setor, idEndereco) 
 VALUES 
-    (1, 'Ana Paula Dias', '720.720.720.20', 72, 'casa', 1),
-    (2, 'João Menezes', '750.750.750.50', 75, 'casa', 2);
+    (1, 'Ana Paula Dias', '720.720.720.20', 72, 'casa', 'TI', 1),
+    (2, 'João Menezes', '750.750.750.50', 75, 'casa', 'TI', 2);
 SELECT * FROM responsavel;
 
 -- Conatatos 
@@ -110,9 +111,9 @@ CREATE TABLE fone_responsavel (
 	nro VARCHAR(20) NOT NULL,
 	idDDD INT REFERENCES ddd(idDDD),
 	idDDI INT REFERENCES ddi(idDDI),
-	idResponsavel INT REFERENCES responsavel(idResponsavel)
+	matricula INT REFERENCES responsavel(matricula)
 );
-INSERT INTO fone_responsavel (idFone, nro, idDDD, idDDI, idResponsavel) 
+INSERT INTO fone_responsavel (idFone, nro, idDDD, idDDI, matricula) 
 VALUES 
     (1, '99872-7070', 45, 55, 1),
 	(2, '99875-7070', 48, 55, 2);
@@ -121,9 +122,9 @@ SELECT * FROM fone_responsavel;
 CREATE TABLE email_responsavel (
     idEmail SERIAL PRIMARY KEY,
 	endereco VARCHAR(50) NOT NULL,
-	idResponsavel INT REFERENCES responsavel(idResponsavel)
+	matricula INT REFERENCES responsavel(matricula)
 );
-INSERT INTO email_responsavel (idEmail, endereco, idResponsavel) 
+INSERT INTO email_responsavel (idEmail, endereco, matricula) 
 VALUES 
     (1, 'ana_paula@gmail.com', 1),
 	(2, 'joao_menezes@gmail.com', 2);
@@ -142,6 +143,12 @@ VALUES
 	(3, 'Ônibus'),
 	(4, 'Trem');
 SELECT * FROM meio_transporte;
+
+CREATE TABLE transporte (
+	idMeio INT REFERENCES meio_transporte(idMeio),
+    idViagem INT REFERENCES viagem(idViagem)
+);
+SELECT * FROM transporte;
 
 CREATE TABLE motivo (  
     idMotivo SERIAL PRIMARY KEY,
@@ -188,11 +195,9 @@ CREATE TABLE viagem (
 	data_fim DATE NOT NULL,
 	idOrigem INT NOT NULL REFERENCES cidade(idCidade),
 	idDestino INT NOT NULL REFERENCES cidade(idCidade),
-	idMeio INT REFERENCES meio_transporte(idMeio),
 	idMotivo INT REFERENCES motivo(idMotivo),
 	idStatus INT REFERENCES status(idStatus),
-	idTipo INT REFERENCES tipo_despesa(idTipo),
-	idResponsavel INT REFERENCES responsavel(idResponsavel)
+	matricula INT REFERENCES responsavel(matricula)
 );
 SELECT * FROM viagem;
 
