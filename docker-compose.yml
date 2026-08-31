@@ -16,5 +16,20 @@ services:
       timeout: 5s
       retries: 10
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: sistema-viagens-backend
+    environment:
+      DB_URL: jdbc:postgresql://banco:5432/sistema_viagens
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+    ports:
+      - "8080:8080"
+    depends_on:
+      banco:
+        condition: service_healthy
+
 volumes:
   dados_postgres:
