@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 
-import Header from "../components/Header";
+import Header from "../components/Header.jsx";
 import Navbar from "../components/Navbar";
 
 import {
