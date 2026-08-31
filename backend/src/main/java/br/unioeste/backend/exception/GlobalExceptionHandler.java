@@ -32,6 +32,23 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(resposta);
     }
 
+    @ExceptionHandler(RegraNegocioException.class)
+    public ResponseEntity<ErroResposta> tratarRegraNegocio(
+        RegraNegocioException exception,
+        HttpServletRequest request
+    ) {
+        ErroResposta resposta = new ErroResposta(
+            LocalDateTime.now(),
+            HttpStatus.BAD_REQUEST.value(),
+            "Regra de negócio inválida",
+            exception.getMessage(),
+            request.getRequestURI(),
+            Map.of()
+        );
+
+        return ResponseEntity.badRequest().body(resposta);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErroResposta> tratarCamposInvalidos(
         MethodArgumentNotValidException exception,
