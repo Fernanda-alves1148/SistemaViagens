@@ -1,0 +1,156 @@
+.gestao-container {
+padding: 32px;
+background-color: #f7f6f1;
+min-height: calc(100vh - 80px);
+}
+
+.gestao-cabecalho {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 28px;
+}
+
+.gestao-cabecalho h2 {
+margin: 0 0 6px;
+color: #34362f;
+font-size: 28px;
+font-weight: 700;
+}
+
+.gestao-cabecalho p {
+margin: 0;
+color: #6f7366;
+font-size: 15px;
+}
+
+.filtros {
+display: flex;
+gap: 10px;
+margin-bottom: 24px;
+flex-wrap: wrap;
+}
+
+.filtro {
+border: 1px solid #d7dacd;
+background-color: #ffffff;
+color: #586545;
+padding: 9px 16px;
+border-radius: 8px;
+cursor: pointer;
+font-size: 14px;
+font-weight: 600;
+transition: 0.2s ease;
+}
+
+.filtro:hover {
+border-color: #7c8b63;
+background-color: #f1f2ea;
+}
+
+.filtro.ativo {
+background-color: #7c8b63;
+color: #ffffff;
+border-color: #7c8b63;
+}
+
+.tabela-container {
+background-color: #ffffff;
+border: 1px solid #e1e2db;
+border-radius: 14px;
+overflow-x: auto;
+box-shadow: 0 2px 8px rgba(52, 54, 47, 0.05);
+}
+
+.tabela-viagens {
+width: 100%;
+border-collapse: collapse;
+min-width: 950px;
+}
+
+.tabela-viagens thead {
+background-color: #f1f2ea;
+}
+
+.tabela-viagens th {
+text-align: left;
+padding: 16px;
+font-size: 13px;
+color: #586545;
+font-weight: 700;
+border-bottom: 1px solid #e1e2db;
+}
+
+.tabela-viagens td {
+padding: 16px;
+font-size: 14px;
+color: #34362f;
+border-bottom: 1px solid #ecece7;
+vertical-align: middle;
+}
+
+.tabela-viagens tbody tr:last-child td {
+border-bottom: none;
+}
+
+.tabela-viagens tbody tr:hover {
+background-color: #fafaf7;
+}
+
+.data-fim {
+color: #7a7e73;
+font-size: 12px;
+}
+
+.status {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+padding: 6px 10px;
+border-radius: 20px;
+font-size: 12px;
+font-weight: 700;
+white-space: nowrap;
+}
+
+.status.solicitada {
+background-color: #f5e6d2;
+color: #9a642b;
+}
+
+.status.aprovada {
+background-color: #e3eadf;
+color: #58704e;
+}
+
+.status.rejeitada {
+background-color: #f0dfdf;
+color: #985c5c;
+}
+
+.status.rascunho {
+background-color: #ecece8;
+color: #6f7366;
+}
+
+.botao-visualizar {
+border: none;
+background-color: #7c8b63;
+color: #ffffff;
+padding: 8px 13px;
+border-radius: 7px;
+cursor: pointer;
+font-size: 13px;
+font-weight: 600;
+transition: 0.2s ease;
+}
+
+.botao-visualizar:hover {
+background-color: #586545;
+}
+
+.sem-resultados {
+text-align: center;
+padding: 40px !important;
+color: #7a7e73 !important;
+}

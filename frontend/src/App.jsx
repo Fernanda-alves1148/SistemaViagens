@@ -8,6 +8,7 @@ import Rascunhos from "./pages/Rascunhos";
 import NovaViagem from "./pages/NovaViagem";
 import DetalhesViagem from "./pages/DetalhesViagem";
 import ViagensSolicitadas from "./pages/ViagensSolicitadas";
+import GestaoViagens from "./pages/GestaoViagens";
 
 function App() {
 
@@ -34,6 +35,11 @@ function App() {
                 <Route
                     path="/viagens-solicitadas"
                     element={<ViagensSolicitadas />}
+                />
+
+                <Route
+                    path="/gestao"
+                    element={<GestaoViagens />}
                 />
 
             </Routes>
