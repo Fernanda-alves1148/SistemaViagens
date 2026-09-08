@@ -9,6 +9,8 @@ import NovaViagem from "./pages/NovaViagem";
 import DetalhesViagem from "./pages/DetalhesViagem";
 import ViagensSolicitadas from "./pages/ViagensSolicitadas";
 import GestaoViagens from "./pages/GestaoViagens";
+import DespesasViagem from "./pages/DespesasViagem";
+import DetalhesGestaoViagem from "./pages/DetalhesGestaoViagem";
 
 function App() {
 
@@ -42,6 +44,18 @@ function App() {
                     element={<GestaoViagens />}
                 />
 
+
+                <Route
+                    path="/viagem/:id/despesas"
+                    element={<DespesasViagem />}
+                />
+
+                <Route
+                path="/gestao/viagem/:id"
+                    element={
+                        <DetalhesGestaoViagem />
+                             }
+                />
             </Routes>
 
         </BrowserRouter>

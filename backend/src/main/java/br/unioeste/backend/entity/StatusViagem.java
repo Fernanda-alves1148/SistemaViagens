@@ -8,26 +8,22 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "status")
+@Table(name = "status_viagem")
 public class StatusViagem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idstatus")
+    @Column(name = "id_status")
     private Integer id;
 
-    @Column(name = "nome", nullable = false, length = 50)
+    @Column(name = "nome", nullable = false, length = 20, unique = true)
     private String nome;
-
-    @Column(name = "justificativa", nullable = false, length = 100)
-    private String justificativa;
 
     protected StatusViagem() {
     }
 
-    public StatusViagem(String nome, String justificativa) {
+    public StatusViagem(String nome) {
         this.nome = nome;
-        this.justificativa = justificativa;
     }
 
     public Integer getId() {
@@ -36,9 +32,5 @@ public class StatusViagem {
 
     public String getNome() {
         return nome;
-    }
-
-    public String getJustificativa() {
-        return justificativa;
     }
 }

@@ -11,7 +11,13 @@ import {
     viagensSolicitadas
 } from "../data/viagensMock";
 
+import "../styles/viagens.css";
+
 function formatarData(data) {
+    if (!data) {
+        return "-";
+    }
+
     const [ano, mes, dia] =
         data.split("-");
 
@@ -19,7 +25,7 @@ function formatarData(data) {
 }
 
 function formatarMoeda(valor) {
-    return Number(valor).toLocaleString(
+    return Number(valor || 0).toLocaleString(
         "pt-BR",
         {
             style: "currency",
@@ -46,7 +52,7 @@ function obterStatus(status) {
 
         case "ACEITA":
             return {
-                texto: "Aceita",
+                texto: "Aprovada",
                 classe: "aceita"
             };
 
@@ -64,19 +70,71 @@ function obterStatus(status) {
     }
 }
 
+function obterHistorico(viagem) {
+
+    if (viagem.historico?.length) {
+        return viagem.historico;
+    }
+
+    const historico = [];
+
+    if (viagem.status === "EM_RASCUNHO") {
+
+        historico.push({
+            status: "Rascunho",
+            data: viagem.dataCriacao || viagem.dataInicio,
+            descricao:
+                "Viagem criada e salva como rascunho."
+        });
+
+    } else {
+
+        historico.push({
+            status: "Rascunho",
+            data: viagem.dataCriacao || viagem.dataInicio,
+            descricao:
+                "Viagem criada inicialmente como rascunho."
+        });
+
+        historico.push({
+            status: "Em análise",
+            data: viagem.dataSolicitacao || viagem.dataInicio,
+            descricao:
+                "Viagem enviada para análise."
+        });
+
+        if (viagem.status === "ACEITA") {
+
+            historico.push({
+                status: "Aprovada",
+                data: viagem.dataAprovacao || viagem.dataFim,
+                descricao:
+                    "Viagem aprovada pelo gestor."
+            });
+
+        }
+
+        if (viagem.status === "REJEITADA") {
+
+            historico.push({
+                status: "Rejeitada",
+                data: viagem.dataRejeicao || viagem.dataFim,
+                descricao:
+                    viagem.justificativa ||
+                    "Viagem rejeitada pelo gestor."
+            });
+
+        }
+    }
+
+    return historico;
+}
+
 function DetalhesViagem() {
 
-    const {
-        id
-    } = useParams();
+    const { id } = useParams();
 
-    const navigate =
-        useNavigate();
-
-    /*
-     * Procuramos primeiro nos rascunhos
-     * e depois nas viagens solicitadas.
-     */
+    const navigate = useNavigate();
 
     const viagemRascunho =
         viagensRascunho.find(
@@ -94,13 +152,10 @@ function DetalhesViagem() {
         viagemRascunho ||
         viagemSolicitada;
 
-    /*
-     * Caso o ID não exista.
-     */
-
     if (!viagem) {
 
         return (
+
             <div className="app">
 
                 <Navbar />
@@ -117,13 +172,19 @@ function DetalhesViagem() {
                                 Viagem não encontrada
                             </h2>
 
+                            <p>
+                                A viagem solicitada
+                                não foi localizada.
+                            </p>
+
                             <button
                                 type="button"
+                                className="botao-destaque"
                                 onClick={() =>
                                     navigate("/")
                                 }
                             >
-                                Voltar
+                                Voltar para minhas viagens
                             </button>
 
                         </div>
@@ -149,20 +210,22 @@ function DetalhesViagem() {
             (total, despesa) =>
                 total +
                 Number(
-                    despesa.valor
+                    despesa.valor || 0
                 ),
             0
         );
 
-    /*
-     * Apenas rascunhos podem ser alterados.
-     */
-
     const podeAlterar =
-        viagem.status ===
-        "EM_RASCUNHO";
+        viagem.status !== "ACEITA";
+
+    const podeRegistrarDespesas =
+        viagem.status === "ACEITA";
+
+    const historico =
+        obterHistorico(viagem);
 
     return (
+
         <div className="app">
 
             <Navbar />
@@ -188,9 +251,7 @@ function DetalhesViagem() {
                     </div>
 
 
-                    {/* =================================
-                        CABEÇALHO
-                    ================================= */}
+                    {/* CABEÇALHO */}
 
                     <section className="detail-header">
 
@@ -207,7 +268,9 @@ function DetalhesViagem() {
                             </h2>
 
                             <p>
-                                Detalhes da solicitação
+                                Acompanhe os dados,
+                                situação e histórico
+                                da viagem.
                             </p>
 
                         </div>
@@ -220,7 +283,6 @@ function DetalhesViagem() {
                             >
                                 {status.texto}
                             </span>
-
 
                             {podeAlterar && (
 
@@ -243,9 +305,7 @@ function DetalhesViagem() {
                     </section>
 
 
-                    {/* =================================
-                        INFORMAÇÕES PRINCIPAIS
-                    ================================= */}
+                    {/* DADOS */}
 
                     <section className="detail-card">
 
@@ -296,9 +356,9 @@ function DetalhesViagem() {
                         </div>
 
 
-                        <div className="info-grid">
+                        <div className="info-grid-viagem">
 
-                            <div className="info-item">
+                            <div className="info-item-viagem">
 
                                 <span>
                                     PERÍODO
@@ -317,43 +377,35 @@ function DetalhesViagem() {
                             </div>
 
 
-                            <div className="info-item">
+                            <div className="info-item-viagem">
 
                                 <span>
                                     TRANSPORTE
                                 </span>
 
                                 <strong>
-                                    {viagem.transportes.join(
+                                    {viagem.transportes?.join(
                                         ", "
-                                    )}
+                                    ) || "Não informado"}
                                 </strong>
 
                             </div>
 
 
-                            <div className="info-item">
+                            <div className="info-item-viagem">
 
                                 <span>
-                                    STATUS
+                                    SITUAÇÃO
                                 </span>
 
-                                <div>
-
-                                    <span
-                                        className={`status ${status.classe}`}
-                                    >
-                                        {status.texto}
-                                    </span>
-
-                                </div>
+                                <strong>
+                                    {status.texto}
+                                </strong>
 
                             </div>
 
                         </div>
 
-
-                        {/* MOTIVO */}
 
                         {viagem.motivo && (
 
@@ -372,11 +424,9 @@ function DetalhesViagem() {
                         )}
 
 
-                        {/* JUSTIFICATIVA */}
-
                         {viagem.justificativa && (
 
-                            <div className="motivo justificativa">
+                            <div className="justificativa-box">
 
                                 <span>
                                     JUSTIFICATIVA DA REJEIÇÃO
@@ -393,9 +443,7 @@ function DetalhesViagem() {
                     </section>
 
 
-                    {/* =================================
-                        DESPESAS
-                    ================================= */}
+                    {/* HISTÓRICO */}
 
                     <section className="section">
 
@@ -404,108 +452,129 @@ function DetalhesViagem() {
                             <div>
 
                                 <h3>
-                                    Despesas
+                                    Histórico da viagem
                                 </h3>
 
                                 <p>
-                                    Valores previstos
-                                    para esta viagem.
+                                    Acompanhe todas as
+                                    mudanças de situação.
                                 </p>
 
                             </div>
-
-
-                            {despesas.length > 0 && (
-
-                                <div className="total-despesas">
-
-                                    <span>
-                                        Total estimado
-                                    </span>
-
-                                    <strong>
-                                        {formatarMoeda(
-                                            totalDespesas
-                                        )}
-                                    </strong>
-
-                                </div>
-
-                            )}
 
                         </div>
 
 
-                        {despesas.length > 0 ? (
+                        <div className="detail-card">
 
-                            <div className="table-container">
+                            <div className="historico">
 
-                                <table>
+                                {historico.map(
+                                    (item, index) => (
 
-                                    <thead>
+                                        <div
+                                            className="historico-item"
+                                            key={`${item.status}-${index}`}
+                                        >
 
-                                        <tr>
+                                            <div className="historico-ponto" />
 
-                                            <th>
-                                                Tipo
-                                            </th>
+                                            <div className="historico-linha" />
 
-                                            <th>
-                                                Valor
-                                            </th>
+                                            <div className="historico-conteudo">
 
-                                        </tr>
+                                                <strong>
+                                                    {item.status}
+                                                </strong>
 
-                                    </thead>
+                                                <span>
+                                                    {item.data
+                                                        ? formatarData(item.data)
+                                                        : "Data não informada"}
+                                                </span>
 
+                                                <p>
+                                                    {item.descricao}
+                                                </p>
 
-                                    <tbody>
+                                            </div>
 
-                                        {despesas.map(
-                                            (despesa) => (
+                                        </div>
 
-                                                <tr
-                                                    key={
-                                                        despesa.id
-                                                    }
-                                                >
-
-                                                    <td>
-                                                        {
-                                                            despesa.tipo
-                                                        }
-                                                    </td>
-
-                                                    <td>
-                                                        {formatarMoeda(
-                                                            despesa.valor
-                                                        )}
-                                                    </td>
-
-                                                </tr>
-
-                                            )
-                                        )}
-
-                                    </tbody>
-
-                                </table>
+                                    )
+                                )}
 
                             </div>
 
-                        ) : (
+                        </div>
 
-                            <div className="empty-state despesas-vazias">
+                    </section>
+
+
+                    {/* FINANCEIRO */}
+
+                    <section className="section">
+
+                        <div className="section-header">
+
+                            <div>
+
+                                <h3>
+                                    Resumo financeiro
+                                </h3>
 
                                 <p>
-                                    Nenhuma despesa
-                                    cadastrada para
-                                    esta viagem.
+                                    Acompanhe os gastos
+                                    relacionados à viagem.
                                 </p>
 
                             </div>
 
-                        )}
+                        </div>
+
+
+                        <div className="detail-card">
+
+                            <div className="resumo-financeiro">
+
+                                <span>
+                                    Total gasto
+                                </span>
+
+                                <strong>
+                                    {formatarMoeda(
+                                        totalDespesas
+                                    )}
+                                </strong>
+
+                            </div>
+
+
+                            {podeRegistrarDespesas ? (
+
+                                <button
+                                    type="button"
+                                    className="botao-destaque"
+                                    onClick={() =>
+                                        navigate(
+                                            `/viagem/${viagem.id}/despesas`
+                                        )
+                                    }
+                                >
+                                    + Registrar despesas
+                                </button>
+
+                            ) : (
+
+                                <p className="texto-ajuda">
+                                    As despesas poderão ser
+                                    registradas somente após
+                                    a aprovação da viagem.
+                                </p>
+
+                            )}
+
+                        </div>
 
                     </section>
 

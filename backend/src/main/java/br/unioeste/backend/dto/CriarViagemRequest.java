@@ -1,9 +1,7 @@
 package br.unioeste.backend.dto;
 
 import java.time.LocalDate;
-import java.util.Set;
 
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 public record CriarViagemRequest(
@@ -23,11 +21,11 @@ public record CriarViagemRequest(
     @NotNull(message = "O motivo é obrigatório")
     Integer idMotivo,
 
-    @NotNull(message = "O responsável é obrigatório")
-    Integer matriculaResponsavel,
+    @NotNull(message = "O solicitante é obrigatório")
+    String matriculaSolicitante,
 
-    @NotEmpty(message = "Informe pelo menos um meio de transporte")
-    Set<Integer> idsMeiosTransporte
+    @NotNull(message = "O meio de transporte é obrigatório")
+    Integer idMeioTransporte
 
 ) {
 }

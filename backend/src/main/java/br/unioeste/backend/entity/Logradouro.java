@@ -2,27 +2,31 @@ package br.unioeste.backend.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "cidade")
-public class Cidade {
+@Table(name = "logradouro")
+public class Logradouro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_cidade")
+    @Column(name = "id_logradouro")
     private Integer id;
 
-    @Column(name = "nome", nullable = false, length = 50)
+    @Column(name = "nome", nullable = false, length = 120)
     private String nome;
 
-    @Column(name = "sigla_uf", nullable = false, length = 2)
-    private String siglaUf;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_tipo_log", nullable = false)
+    private TipoLogradouro tipo;
 
-    protected Cidade() {
+    protected Logradouro() {
     }
 
     public Integer getId() {
@@ -33,7 +37,7 @@ public class Cidade {
         return nome;
     }
 
-    public String getSiglaUf() {
-        return siglaUf;
+    public TipoLogradouro getTipo() {
+        return tipo;
     }
 }

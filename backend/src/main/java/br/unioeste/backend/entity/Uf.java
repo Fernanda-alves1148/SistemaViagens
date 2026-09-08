@@ -8,32 +8,32 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "cidade")
-public class Cidade {
+@Table(name = "uf")
+public class Uf {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_cidade")
+    @Column(name = "id_uf")
     private Integer id;
 
-    @Column(name = "nome", nullable = false, length = 50)
+    @Column(name = "sigla", nullable = false, length = 2, unique = true)
+    private String sigla;
+
+    @Column(name = "nome", nullable = false, length = 50, unique = true)
     private String nome;
 
-    @Column(name = "sigla_uf", nullable = false, length = 2)
-    private String siglaUf;
-
-    protected Cidade() {
+    protected Uf() {
     }
 
     public Integer getId() {
         return id;
     }
 
-    public String getNome() {
-        return nome;
+    public String getSigla() {
+        return sigla;
     }
 
-    public String getSiglaUf() {
-        return siglaUf;
+    public String getNome() {
+        return nome;
     }
 }

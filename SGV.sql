@@ -204,7 +204,7 @@ SELECT * FROM viagem;
 CREATE TABLE despesas (
 	data_despesa DATE NOT NULL,
 	descricao VARCHAR(100) NOT NULL,
-	valor MONEY NOT NULL,
+	valor INT NOT NULL,
 	idViagem INT REFERENCES viagem(idViagem),
 	idTipo INT REFERENCES tipo_despesa(idTipo)
 );

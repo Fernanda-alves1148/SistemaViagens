@@ -1,9 +1,14 @@
 package br.unioeste.backend.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+import java.util.Optional;
 
 import br.unioeste.backend.entity.Viagem;
 
-public interface ViagemRepository
-    extends JpaRepository<Viagem, Integer> {
+public interface ViagemRepository {
+    Optional<Viagem> findById(Integer id);
+    Optional<Viagem> findByIdWithRelations(Integer id);
+    List<Viagem> findAll();
+    Viagem save(Viagem viagem);
+    void alterarStatusViagem(Integer idViagem, Integer idNovoStatus, Integer idUsuarioResponsavel, String observacao);
 }

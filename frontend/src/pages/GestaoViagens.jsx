@@ -1,173 +1,728 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import Header from "../components/Header.jsx";
+import Navbar from "../components/Navbar";
+
+import {
+    viagensSolicitadas,
+    viagensRascunho
+} from "../data/viagensMock";
+
 import "../styles/gestao.css";
 
-function GestaoViagens() {
-const [filtro, setFiltro] = useState("Todas");
+function formatarData(data) {
+    if (!data) {
+        return "-";
+    }
 
-// Dados temporários apenas para montar a interface.
-// Depois vamos substituir pelos dados vindos do backend.
-const viagens = [
-{
-id: 1,
-colaborador: "Ana Paula Dias",
-origem: "Foz do Iguaçu - PR",
-destino: "Curitiba - PR",
-dataInicio: "10/09/2026",
-dataFim: "12/09/2026",
-status: "Solicitada",
-},
-{
-id: 2,
-colaborador: "João Menezes",
-origem: "Foz do Iguaçu - PR",
-destino: "Joinville - SC",
-dataInicio: "15/09/2026",
-dataFim: "17/09/2026",
-status: "Aprovada",
-},
-{
-id: 3,
-colaborador: "Maria Silva",
-origem: "Foz do Iguaçu - PR",
-destino: "São Paulo - SP",
-dataInicio: "20/09/2026",
-dataFim: "22/09/2026",
-status: "Rejeitada",
-},
-{
-id: 4,
-colaborador: "Carlos Oliveira",
-origem: "Foz do Iguaçu - PR",
-destino: "Guarulhos - SP",
-dataInicio: "25/09/2026",
-dataFim: "27/09/2026",
-status: "Rascunho",
-},
-];
+    const [ano, mes, dia] = data.split("-");
 
-const viagensFiltradas =
-filtro === "Todas"
-? viagens
-: viagens.filter((viagem) => viagem.status === filtro);
+    return `${dia}/${mes}/${ano}`;
+}
+
+function obterTextoStatus(status) {
+    switch (status) {
+        case "RASCUNHO":
+            return "Rascunho";
+
+        case "SOLICITADA":
+            return "Em análise";
+
+        case "AJUSTES_SOLICITADOS":
+            return "Ajustes solicitados";
+
+        case "APROVADA":
+            return "Aprovada";
+
+        case "REJEITADA":
+            return "Rejeitada";
+
+        case "CANCELADA":
+            return "Cancelada";
+
+        default:
+            return status;
+    }
+}
 
 function obterClasseStatus(status) {
-switch (status) {
-case "Solicitada":
-return "status solicitada";
-case "Aprovada":
-return "status aprovada";
-case "Rejeitada":
-return "status rejeitada";
-case "Rascunho":
-return "status rascunho";
-default:
-return "status";
+    switch (status) {
+        case "SOLICITADA":
+            return "status analise";
+
+        case "AJUSTES_SOLICITADOS":
+            return "status ajustes";
+
+        case "APROVADA":
+            return "status aceita";
+
+        case "REJEITADA":
+            return "status rejeitada";
+
+        case "CANCELADA":
+            return "status cancelada";
+
+        case "RASCUNHO":
+            return "status rascunho";
+
+        default:
+            return "status rascunho";
+    }
 }
-}
 
-return ( <div className="gestao-container"> <div className="gestao-cabecalho"> <div> <h2>Gestão de Viagens</h2> <p>Consulte e gerencie as viagens dos colaboradores.</p> </div> </div>
+function GestaoViagens() {
+    const navigate = useNavigate();
+
+    const [filtroStatus, setFiltroStatus] =
+        useState("TODAS");
+
+    const [destinoBusca, setDestinoBusca] =
+        useState("");
+
+    const [dataInicioBusca, setDataInicioBusca] =
+        useState("");
+
+    const [dataFimBusca, setDataFimBusca] =
+        useState("");
+
+    /*
+     * Enquanto o frontend não estiver conectado
+     * ao backend, utilizamos os dados mockados.
+     */
+    const todasAsViagens = [
+        ...viagensRascunho,
+        ...viagensSolicitadas
+    ];
+
+    const viagens = todasAsViagens.map(
+        (viagem) => ({
+            ...viagem,
+
+            colaborador:
+                viagem.responsavel ||
+                "Não informado",
+
+            transporte:
+                viagem.transportes?.join(
+                    ", "
+                ) ||
+                "Não informado"
+        })
+    );
+
+    const quantidadeTotal =
+        viagens.length;
+
+    const quantidadeAnalise =
+        viagens.filter(
+            (viagem) =>
+                viagem.status ===
+                "SOLICITADA"
+        ).length;
+
+    const quantidadeAprovadas =
+        viagens.filter(
+            (viagem) =>
+                viagem.status ===
+                "APROVADA"
+        ).length;
+
+    const quantidadeRejeitadas =
+        viagens.filter(
+            (viagem) =>
+                viagem.status ===
+                "REJEITADA"
+        ).length;
+
+    const viagensFiltradas =
+        viagens.filter(
+            (viagem) => {
+
+                const correspondeStatus =
+                    filtroStatus === "TODAS" ||
+                    viagem.status ===
+                        filtroStatus;
+
+                const correspondeDestino =
+                    destinoBusca.trim() === "" ||
+                    viagem.destino
+                        .toLowerCase()
+                        .includes(
+                            destinoBusca
+                                .trim()
+                                .toLowerCase()
+                        );
+
+                const correspondeDataInicio =
+                    dataInicioBusca === "" ||
+                    viagem.dataInicio >=
+                        dataInicioBusca;
+
+                const correspondeDataFim =
+                    dataFimBusca === "" ||
+                    viagem.dataFim <=
+                        dataFimBusca;
+
+                return (
+                    correspondeStatus &&
+                    correspondeDestino &&
+                    correspondeDataInicio &&
+                    correspondeDataFim
+                );
+            }
+        );
+
+    function limparFiltros() {
+        setFiltroStatus("TODAS");
+        setDestinoBusca("");
+        setDataInicioBusca("");
+        setDataFimBusca("");
+    }
+
+    return (
+        <div className="app">
+
+            <Navbar />
+
+            <div className="main-area">
+
+                <Header />
+
+                <main className="content">
+
+                    {/* ===============================
+                        CABEÇALHO
+                    =============================== */}
+
+                    <section className="welcome">
+
+                        <div>
+
+                            <span className="welcome-small">
+                                ÁREA DO GESTOR
+                            </span>
+
+                            <h2>
+                                Gestão de viagens
+                            </h2>
+
+                            <p>
+                                Consulte as viagens
+                                dos colaboradores e
+                                acompanhe as solicitações
+                                que aguardam análise.
+                            </p>
+
+                        </div>
+
+                    </section>
 
 
-  <div className="filtros">
-    <button
-      className={filtro === "Todas" ? "filtro ativo" : "filtro"}
-      onClick={() => setFiltro("Todas")}
-    >
-      Todas
-    </button>
+                    {/* ===============================
+                        INDICADORES
+                    =============================== */}
 
-    <button
-      className={filtro === "Solicitada" ? "filtro ativo" : "filtro"}
-      onClick={() => setFiltro("Solicitada")}
-    >
-      Em análise
-    </button>
+                    <section className="cards">
 
-    <button
-      className={filtro === "Aprovada" ? "filtro ativo" : "filtro"}
-      onClick={() => setFiltro("Aprovada")}
-    >
-      Aprovadas
-    </button>
+                        <div className="summary-card">
 
-    <button
-      className={filtro === "Rejeitada" ? "filtro ativo" : "filtro"}
-      onClick={() => setFiltro("Rejeitada")}
-    >
-      Rejeitadas
-    </button>
+                            <div className="summary-icon olive">
+                                ∑
+                            </div>
 
-    <button
-      className={filtro === "Rascunho" ? "filtro ativo" : "filtro"}
-      onClick={() => setFiltro("Rascunho")}
-    >
-      Rascunhos
-    </button>
-  </div>
+                            <div>
 
-  <div className="tabela-container">
-    <table className="tabela-viagens">
-      <thead>
-        <tr>
-          <th>Viagem</th>
-          <th>Colaborador</th>
-          <th>Origem</th>
-          <th>Destino</th>
-          <th>Período</th>
-          <th>Situação</th>
-          <th>Ação</th>
-        </tr>
-      </thead>
+                                <strong>
+                                    {quantidadeTotal}
+                                </strong>
 
-      <tbody>
-        {viagensFiltradas.length > 0 ? (
-          viagensFiltradas.map((viagem) => (
-            <tr key={viagem.id}>
-              <td>#{String(viagem.id).padStart(3, "0")}</td>
+                                <span>
+                                    Total de viagens
+                                </span>
 
-              <td>{viagem.colaborador}</td>
+                            </div>
 
-              <td>{viagem.origem}</td>
-
-              <td>{viagem.destino}</td>
-
-              <td>
-                {viagem.dataInicio}
-                <br />
-                <span className="data-fim">
-                  até {viagem.dataFim}
-                </span>
-              </td>
-
-              <td>
-                <span className={obterClasseStatus(viagem.status)}>
-                  {viagem.status === "Solicitada"
-                    ? "Em análise"
-                    : viagem.status}
-                </span>
-              </td>
-
-              <td>
-                <button className="botao-visualizar">
-                  Visualizar
-                </button>
-              </td>
-            </tr>
-          ))
-        ) : (
-          <tr>
-            <td colSpan="7" className="sem-resultados">
-              Nenhuma viagem encontrada.
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
+                        </div>
 
 
-);
+                        <div
+                            className="summary-card clickable"
+                            onClick={() =>
+                                setFiltroStatus(
+                                    "SOLICITADA"
+                                )
+                            }
+                        >
+
+                            <div className="summary-icon orange">
+                                ◷
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    {quantidadeAnalise}
+                                </strong>
+
+                                <span>
+                                    Em análise
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            className="summary-card clickable"
+                            onClick={() =>
+                                setFiltroStatus(
+                                    "APROVADA"
+                                )
+                            }
+                        >
+
+                            <div className="summary-icon green">
+                                ✓
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    {quantidadeAprovadas}
+                                </strong>
+
+                                <span>
+                                    Aprovadas
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <div
+                            className="summary-card clickable"
+                            onClick={() =>
+                                setFiltroStatus(
+                                    "REJEITADA"
+                                )
+                            }
+                        >
+
+                            <div className="summary-icon red">
+                                !
+                            </div>
+
+                            <div>
+
+                                <strong>
+                                    {quantidadeRejeitadas}
+                                </strong>
+
+                                <span>
+                                    Rejeitadas
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    {/* ===============================
+                        FILTROS
+                    =============================== */}
+
+                    <section className="section">
+
+                        <div className="section-header">
+
+                            <div>
+
+                                <h3>
+                                    Consultar viagens
+                                </h3>
+
+                                <p>
+                                    Pesquise por destino,
+                                    período ou situação.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div className="filtros-gestao">
+
+                            <div className="campo-filtro">
+
+                                <label htmlFor="destinoBusca">
+                                    Destino
+                                </label>
+
+                                <input
+                                    id="destinoBusca"
+                                    type="text"
+                                    placeholder="Ex.: Curitiba"
+                                    value={
+                                        destinoBusca
+                                    }
+                                    onChange={(event) =>
+                                        setDestinoBusca(
+                                            event.target.value
+                                        )
+                                    }
+                                />
+
+                            </div>
+
+
+                            <div className="campo-filtro">
+
+                                <label htmlFor="dataInicioBusca">
+                                    A partir de
+                                </label>
+
+                                <input
+                                    id="dataInicioBusca"
+                                    type="date"
+                                    value={
+                                        dataInicioBusca
+                                    }
+                                    onChange={(event) =>
+                                        setDataInicioBusca(
+                                            event.target.value
+                                        )
+                                    }
+                                />
+
+                            </div>
+
+
+                            <div className="campo-filtro">
+
+                                <label htmlFor="dataFimBusca">
+                                    Até
+                                </label>
+
+                                <input
+                                    id="dataFimBusca"
+                                    type="date"
+                                    value={
+                                        dataFimBusca
+                                    }
+                                    onChange={(event) =>
+                                        setDataFimBusca(
+                                            event.target.value
+                                        )
+                                    }
+                                />
+
+                            </div>
+
+
+                            <div className="campo-filtro">
+
+                                <label htmlFor="filtroStatus">
+                                    Situação
+                                </label>
+
+                                <select
+                                    id="filtroStatus"
+                                    value={
+                                        filtroStatus
+                                    }
+                                    onChange={(event) =>
+                                        setFiltroStatus(
+                                            event.target.value
+                                        )
+                                    }
+                                >
+
+                                    <option value="TODAS">
+                                        Todas
+                                    </option>
+
+                                    <option value="RASCUNHO">
+                                        Rascunhos
+                                    </option>
+
+                                    <option value="SOLICITADA">
+                                        Em análise
+                                    </option>
+
+                                    <option value="AJUSTES_SOLICITADOS">
+                                        Ajustes solicitados
+                                    </option>
+
+                                    <option value="APROVADA">
+                                        Aprovadas
+                                    </option>
+
+                                    <option value="REJEITADA">
+                                        Rejeitadas
+                                    </option>
+
+                                    <option value="CANCELADA">
+                                        Canceladas
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div className="campo-filtro acao-filtro">
+
+                                <button
+                                    type="button"
+                                    className="botao-secundario"
+                                    onClick={
+                                        limparFiltros
+                                    }
+                                >
+                                    Limpar filtros
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    {/* ===============================
+                        RESULTADOS
+                    =============================== */}
+
+                    <section className="section">
+
+                        <div className="section-header">
+
+                            <div>
+
+                                <h3>
+                                    Viagens cadastradas
+                                </h3>
+
+                                <p>
+                                    {viagensFiltradas.length}
+                                    {" "}
+                                    viagem(ns)
+                                    encontrada(s).
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div className="table-container">
+
+                            {viagensFiltradas.length === 0 ? (
+
+                                <div className="empty-state">
+
+                                    <h3>
+                                        Nenhuma viagem encontrada
+                                    </h3>
+
+                                    <p>
+                                        Tente modificar os
+                                        filtros da pesquisa.
+                                    </p>
+
+                                </div>
+
+                            ) : (
+
+                                <table className="tabela-viagens">
+
+                                    <thead>
+
+                                        <tr>
+
+                                            <th>
+                                                Viagem
+                                            </th>
+
+                                            <th>
+                                                Colaborador
+                                            </th>
+
+                                            <th>
+                                                Destino
+                                            </th>
+
+                                            <th>
+                                                Período
+                                            </th>
+
+                                            <th>
+                                                Transporte
+                                            </th>
+
+                                            <th>
+                                                Situação
+                                            </th>
+
+                                            <th>
+                                                Ação
+                                            </th>
+
+                                        </tr>
+
+                                    </thead>
+
+
+                                    <tbody>
+
+                                        {viagensFiltradas.map(
+                                            (viagem) => (
+
+                                                <tr
+                                                    key={
+                                                        viagem.id
+                                                    }
+                                                >
+
+                                                    <td>
+
+                                                        #
+                                                        {String(
+                                                            viagem.id
+                                                        ).padStart(
+                                                            3,
+                                                            "0"
+                                                        )}
+
+                                                    </td>
+
+
+                                                    <td>
+
+                                                        <strong>
+                                                            {
+                                                                viagem.colaborador
+                                                            }
+                                                        </strong>
+
+                                                        <span className="texto-suave">
+                                                            {
+                                                                viagem.matricula
+                                                            }
+                                                        </span>
+
+                                                    </td>
+
+
+                                                    <td>
+
+                                                        <div className="celula-rota">
+
+                                                            <strong>
+                                                                {
+                                                                    viagem.destino
+                                                                }
+                                                            </strong>
+
+                                                            <span>
+                                                                de{" "}
+                                                                {
+                                                                    viagem.origem
+                                                                }
+                                                            </span>
+
+                                                        </div>
+
+                                                    </td>
+
+
+                                                    <td>
+
+                                                        <strong>
+                                                            {formatarData(
+                                                                viagem.dataInicio
+                                                            )}
+                                                        </strong>
+
+                                                        <span className="data-fim">
+                                                            até{" "}
+                                                            {formatarData(
+                                                                viagem.dataFim
+                                                            )}
+                                                        </span>
+
+                                                    </td>
+
+
+                                                    <td>
+                                                        {
+                                                            viagem.transporte
+                                                        }
+                                                    </td>
+
+
+                                                    <td>
+
+                                                        <span
+                                                            className={
+                                                                obterClasseStatus(
+                                                                    viagem.status
+                                                                )
+                                                            }
+                                                        >
+                                                            {
+                                                                obterTextoStatus(
+                                                                    viagem.status
+                                                                )
+                                                            }
+                                                        </span>
+
+                                                    </td>
+
+
+                                                    <td>
+
+                                                        <button
+                                                            type="button"
+                                                            className="botao-visualizar"
+                                                            onClick={() =>
+                                                                navigate(
+                                                                    `/gestao/viagem/${viagem.id}`
+                                                                )
+                                                            }
+                                                        >
+                                                            Visualizar
+                                                        </button>
+
+                                                    </td>
+
+                                                </tr>
+
+                                            )
+                                        )}
+
+                                    </tbody>
+
+                                </table>
+
+                            )}
+
+                        </div>
+
+                    </section>
+
+                </main>
+
+            </div>
+
+        </div>
+    );
 }
 
 export default GestaoViagens;

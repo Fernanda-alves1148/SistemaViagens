@@ -8,32 +8,25 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "cidade")
-public class Cidade {
+@Table(name = "tipo_logradouro")
+public class TipoLogradouro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_cidade")
+    @Column(name = "id_tipo_log")
     private Integer id;
 
-    @Column(name = "nome", nullable = false, length = 50)
-    private String nome;
+    @Column(name = "descricao", nullable = false, length = 30, unique = true)
+    private String descricao;
 
-    @Column(name = "sigla_uf", nullable = false, length = 2)
-    private String siglaUf;
-
-    protected Cidade() {
+    protected TipoLogradouro() {
     }
 
     public Integer getId() {
         return id;
     }
 
-    public String getNome() {
-        return nome;
-    }
-
-    public String getSiglaUf() {
-        return siglaUf;
+    public String getDescricao() {
+        return descricao;
     }
 }

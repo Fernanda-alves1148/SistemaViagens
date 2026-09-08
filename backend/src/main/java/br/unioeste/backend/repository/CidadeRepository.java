@@ -1,9 +1,11 @@
 package br.unioeste.backend.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+import java.util.Optional;
 
 import br.unioeste.backend.entity.Cidade;
 
-public interface CidadeRepository
-    extends JpaRepository<Cidade, Integer> {
+public interface CidadeRepository {
+    Optional<Cidade> findById(Integer id);
+    List<Cidade> findAll();
 }

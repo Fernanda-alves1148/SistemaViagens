@@ -13,17 +13,13 @@ public class MeioTransporte {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idmeio")
+    @Column(name = "id_meio")
     private Integer id;
 
-    @Column(name = "nome", nullable = false, length = 50)
+    @Column(name = "nome", nullable = false, length = 50, unique = true)
     private String nome;
 
     protected MeioTransporte() {
-    }
-
-    public MeioTransporte(String nome) {
-        this.nome = nome;
     }
 
     public Integer getId() {

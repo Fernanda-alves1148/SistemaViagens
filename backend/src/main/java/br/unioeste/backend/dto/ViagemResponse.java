@@ -1,7 +1,6 @@
 package br.unioeste.backend.dto;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import br.unioeste.backend.entity.Viagem;
 
@@ -10,30 +9,42 @@ public record ViagemResponse(
     LocalDate dataInicio,
     LocalDate dataFim,
     String origem,
+    String ufOrigem,
     String destino,
+    String ufDestino,
     String motivo,
+    String meioTransporte,
     String status,
-    String responsavel,
-    List<String> meiosTransporte
+    String solicitante,
+    String cargoNoMomento,
+    String areaNoMomento,
+    String justificativa
 ) {
 
     public static ViagemResponse de(Viagem viagem) {
-        List<String> meios = viagem.getMeiosTransporte()
-            .stream()
-            .map(meio -> meio.getNome())
-            .sorted()
-            .toList();
+        String cargo = viagem.getHistoricoEmpregado() != null && viagem.getHistoricoEmpregado().getCargo() != null
+            ? viagem.getHistoricoEmpregado().getCargo().getNome()
+            : null;
+
+        String area = viagem.getHistoricoEmpregado() != null && viagem.getHistoricoEmpregado().getArea() != null
+            ? viagem.getHistoricoEmpregado().getArea().getNome()
+            : null;
 
         return new ViagemResponse(
             viagem.getId(),
             viagem.getDataInicio(),
             viagem.getDataFim(),
             viagem.getOrigem().getNome(),
+            viagem.getOrigem().getSiglaUf(),
             viagem.getDestino().getNome(),
+            viagem.getDestino().getSiglaUf(),
             viagem.getMotivo().getNome(),
+            viagem.getMeioTransporte().getNome(),
             viagem.getStatus().getNome(),
-            viagem.getResponsavel().getNome(),
-            meios
+            viagem.getSolicitante().getNome(),
+            cargo,
+            area,
+            viagem.getJustificativa()
         );
     }
 }

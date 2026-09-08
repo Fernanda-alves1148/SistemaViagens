@@ -3,378 +3,373 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
 import Navbar from "../components/Navbar";
-import TabelaDespesas from "../components/TabelaDespesas";
+
+import "../styles/viagens.css";
 
 function NovaViagem() {
+    const navigate = useNavigate();
+    const location = useLocation();
 
-const navigate = useNavigate();
-const location = useLocation();
+    const parametros =
+        new URLSearchParams(location.search);
 
-const parametros =
-    new URLSearchParams(location.search);
+    const idEdicao =
+        parametros.get("editar");
 
-const idEdicao =
-    parametros.get("editar");
+    const modoEdicao =
+        Boolean(idEdicao);
 
-const modoEdicao =
-    Boolean(idEdicao);
+    const [dataInicio, setDataInicio] =
+        useState("");
 
-const [dataInicio, setDataInicio] =
-    useState("");
+    const [dataFim, setDataFim] =
+        useState("");
 
-const [dataFim, setDataFim] =
-    useState("");
+    const [origem, setOrigem] =
+        useState("");
 
-const [origem, setOrigem] =
-    useState("");
+    const [destino, setDestino] =
+        useState("");
 
-const [destino, setDestino] =
-    useState("");
+    const [transportes, setTransportes] =
+        useState([]);
 
-const [transportes, setTransportes] =
-    useState([]);
+    const [motivo, setMotivo] =
+        useState("");
 
-const [despesas, setDespesas] =
-    useState([]);
+    function alternarTransporte(transporte) {
+        if (transportes.includes(transporte)) {
 
-const [motivo, setMotivo] =
-    useState("");
+            setTransportes(
+                transportes.filter(
+                    (item) =>
+                        item !== transporte
+                )
+            );
 
-function alternarTransporte(
-    transporte
-) {
-
-    if (
-        transportes.includes(
-            transporte
-        )
-    ) {
-
-        setTransportes(
-            transportes.filter(
-                (item) =>
-                    item !== transporte
-            )
-        );
-
-    } else {
+            return;
+        }
 
         setTransportes([
             ...transportes,
             transporte
         ]);
-
     }
-}
 
-function montarViagem(status) {
+    function montarViagem(status) {
+        return {
+            id: idEdicao
+                ? Number(idEdicao)
+                : undefined,
 
-    return {
-        id: idEdicao
-            ? Number(idEdicao)
-            : undefined,
+            dataInicio,
 
-        dataInicio,
+            dataFim,
 
-        dataFim,
+            origem,
 
-        origem,
+            destino,
 
-        destino,
+            transportes,
 
-        transportes,
+            motivo,
 
-        despesas,
+            status
+        };
+    }
 
-        motivo,
+    function validarFormulario() {
 
-        status
-    };
-}
+        if (!dataInicio) {
+            alert(
+                "Informe a data de início."
+            );
+            return false;
+        }
 
-function validarFormulario() {
+        if (!dataFim) {
+            alert(
+                "Informe a data de fim."
+            );
+            return false;
+        }
 
-    if (!dataInicio) {
-        alert(
-            "Informe a data de início."
+        const hoje =
+            new Date()
+                .toISOString()
+                .split("T")[0];
+
+        if (dataInicio < hoje) {
+            alert(
+                "A data de início não pode estar no passado."
+            );
+            return false;
+        }
+
+        if (dataFim < dataInicio) {
+            alert(
+                "A data de fim deve ser igual ou posterior à data de início."
+            );
+            return false;
+        }
+
+        if (!origem.trim()) {
+            alert(
+                "Informe a origem da viagem."
+            );
+            return false;
+        }
+
+        if (!destino.trim()) {
+            alert(
+                "Informe o destino da viagem."
+            );
+            return false;
+        }
+
+        if (transportes.length === 0) {
+            alert(
+                "Selecione pelo menos um meio de transporte."
+            );
+            return false;
+        }
+
+        if (!motivo.trim()) {
+            alert(
+                "Informe o motivo da viagem."
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    function salvarRascunho() {
+        const viagem =
+            montarViagem(
+                "EM_RASCUNHO"
+            );
+
+        console.log(
+            "Salvar rascunho:",
+            viagem
         );
-        return false;
-    }
 
-    if (!dataFim) {
         alert(
-            "Informe a data de fim."
-        );
-        return false;
-    }
-
-    if (!origem.trim()) {
-        alert(
-            "Informe a origem da viagem."
-        );
-        return false;
-    }
-
-    if (!destino.trim()) {
-        alert(
-            "Informe o destino da viagem."
-        );
-        return false;
-    }
-
-    if (
-        transportes.length === 0
-    ) {
-        alert(
-            "Selecione pelo menos um meio de transporte."
-        );
-        return false;
-    }
-
-    if (!motivo.trim()) {
-        alert(
-            "Informe o motivo da viagem."
-        );
-        return false;
-    }
-
-    return true;
-}
-
-function salvarViagem() {
-
-    if (!validarFormulario()) {
-        return;
-    }
-
-    const viagem =
-        montarViagem(
             modoEdicao
-                ? "EM_RASCUNHO"
-                : "SOLICITADA"
+                ? "Rascunho atualizado com sucesso!"
+                : "Viagem salva como rascunho!"
         );
 
-    console.log(
-        modoEdicao
-            ? "Atualizar viagem:"
-            : "Criar viagem:",
-        viagem
-    );
+        navigate("/");
+    }
 
-    alert(
-        modoEdicao
-            ? "Alterações salvas com sucesso!"
-            : "Viagem cadastrada com sucesso!"
-    );
+    function enviarParaAnalise() {
 
-    navigate("/");
-}
+        if (!validarFormulario()) {
+            return;
+        }
 
-function salvarRascunho() {
+        const viagem =
+            montarViagem(
+                "EM_ANALISE"
+            );
 
-    const viagem =
-        montarViagem(
-            "EM_RASCUNHO"
+        console.log(
+            "Enviar para análise:",
+            viagem
         );
 
-    console.log(
-        "Salvar rascunho:",
-        viagem
-    );
+        alert(
+            modoEdicao
+                ? "Viagem reenviada para análise!"
+                : "Viagem enviada para análise!"
+        );
 
-    alert(
-        modoEdicao
-            ? "Rascunho atualizado com sucesso!"
-            : "Viagem salva como rascunho!"
-    );
+        navigate("/");
+    }
 
-    navigate("/");
-}
+    return (
+        <div className="app">
 
-return (
-    <div className="app">
+            <Navbar />
 
-        <Navbar />
+            <div className="main-area">
 
-        <div className="main-area">
+                <Header />
 
-            <Header />
+                <main className="content">
 
-            <main className="content">
+                    <div className="page-back">
 
-                <div className="page-back">
-
-                    <button
-                        type="button"
-                        className="botao-voltar"
-                        onClick={() =>
-                            navigate(-1)
-                        }
-                    >
-                        ← Voltar
-                    </button>
-
-                </div>
-
-
-                <section className="welcome">
-
-                    <div>
-
-                        <span className="welcome-small">
-                            {modoEdicao
-                                ? "EDITAR VIAGEM"
-                                : "NOVA VIAGEM"}
-                        </span>
-
-                        <h2>
-                            {modoEdicao
-                                ? "Alterar viagem"
-                                : "Nova viagem"}
-                        </h2>
-
-                        <p>
-                            {modoEdicao
-                                ? "Atualize as informações da sua viagem."
-                                : "Preencha as informações para cadastrar uma nova viagem."}
-                        </p>
-
-                    </div>
-
-                </section>
-
-
-                <section className="formulario">
-
-                    <div className="form-section">
-
-                        <div className="form-section-title">
-
-                            
-
-                            <div>
-                                <h3>
-                                    01 - Informações da viagem
-                                </h3>
-
-                                <p>
-                                    Informe os dados principais da viagem.
-                                </p>
-                            </div>
-
-                        </div>
-
-
-                        <div className="grid-formulario">
-
-                            <div className="campo">
-
-                                <label htmlFor="dataInicio">
-                                    Data de início
-                                </label>
-
-                                <input
-                                    id="dataInicio"
-                                    type="date"
-                                    value={dataInicio}
-                                    onChange={(event) =>
-                                        setDataInicio(
-                                            event.target.value
-                                        )
-                                    }
-                                />
-
-                            </div>
-
-
-                            <div className="campo">
-
-                                <label htmlFor="dataFim">
-                                    Data de fim
-                                </label>
-
-                                <input
-                                    id="dataFim"
-                                    type="date"
-                                    value={dataFim}
-                                    onChange={(event) =>
-                                        setDataFim(
-                                            event.target.value
-                                        )
-                                    }
-                                />
-
-                            </div>
-
-
-                            <div className="campo">
-
-                                <label htmlFor="origem">
-                                    Origem da viagem
-                                </label>
-
-                                <input
-                                    id="origem"
-                                    type="text"
-                                    placeholder="Ex.: São Paulo - SP"
-                                    value={origem}
-                                    onChange={(event) =>
-                                        setOrigem(
-                                            event.target.value
-                                        )
-                                    }
-                                />
-
-                            </div>
-
-
-                            <div className="campo">
-
-                                <label htmlFor="destino">
-                                    Destino da viagem
-                                </label>
-
-                                <input
-                                    id="destino"
-                                    type="text"
-                                    placeholder="Ex.: Curitiba - PR"
-                                    value={destino}
-                                    onChange={(event) =>
-                                        setDestino(
-                                            event.target.value
-                                        )
-                                    }
-                                />
-
-                            </div>
-
-                        </div>
+                        <button
+                            type="button"
+                            className="botao-voltar"
+                            onClick={() =>
+                                navigate(-1)
+                            }
+                        >
+                            ← Voltar
+                        </button>
 
                     </div>
 
 
-                    <div className="form-section">
+                    <section className="welcome">
 
-                        <div className="form-section-title">
+                        <div>
 
-                            
+                            <span className="welcome-small">
+                                {modoEdicao
+                                    ? "EDITAR VIAGEM"
+                                    : "NOVA VIAGEM"}
+                            </span>
 
-                            <div>
+                            <h2>
+                                {modoEdicao
+                                    ? "Alterar viagem"
+                                    : "Planejar nova viagem"}
+                            </h2>
+
+                            <p>
+                                Informe os dados da
+                                viagem e escolha como
+                                deseja finalizar o planejamento.
+                            </p>
+
+                        </div>
+
+                    </section>
+
+
+                    <section className="formulario-viagem">
+
+                        {/* DADOS PRINCIPAIS */}
+
+                        <div className="form-section">
+
+                            <div className="form-section-title">
+
                                 <h3>
-                                    02 - Meio de transporte
+                                    01 — Informações da viagem
                                 </h3>
 
                                 <p>
-                                    Selecione todos os meios utilizados.
+                                    Informe o período,
+                                    origem e destino.
                                 </p>
+
+                            </div>
+
+
+                            <div className="grid-formulario">
+
+                                <div className="campo-viagem">
+
+                                    <label htmlFor="dataInicio">
+                                        Data de início
+                                    </label>
+
+                                    <input
+                                        id="dataInicio"
+                                        type="date"
+                                        value={dataInicio}
+                                        onChange={(event) =>
+                                            setDataInicio(
+                                                event.target.value
+                                            )
+                                        }
+                                    />
+
+                                </div>
+
+
+                                <div className="campo-viagem">
+
+                                    <label htmlFor="dataFim">
+                                        Data de fim
+                                    </label>
+
+                                    <input
+                                        id="dataFim"
+                                        type="date"
+                                        min={dataInicio || undefined}
+                                        value={dataFim}
+                                        onChange={(event) =>
+                                            setDataFim(
+                                                event.target.value
+                                            )
+                                        }
+                                    />
+
+                                </div>
+
+
+                                <div className="campo-viagem">
+
+                                    <label htmlFor="origem">
+                                        Origem
+                                    </label>
+
+                                    <input
+                                        id="origem"
+                                        type="text"
+                                        placeholder="Ex.: Foz do Iguaçu - PR"
+                                        value={origem}
+                                        onChange={(event) =>
+                                            setOrigem(
+                                                event.target.value
+                                            )
+                                        }
+                                    />
+
+                                </div>
+
+
+                                <div className="campo-viagem">
+
+                                    <label htmlFor="destino">
+                                        Destino
+                                    </label>
+
+                                    <input
+                                        id="destino"
+                                        type="text"
+                                        placeholder="Ex.: Curitiba - PR"
+                                        value={destino}
+                                        onChange={(event) =>
+                                            setDestino(
+                                                event.target.value
+                                            )
+                                        }
+                                    />
+
+                                </div>
+
                             </div>
 
                         </div>
 
 
-                        <div className="campo">
+                        {/* TRANSPORTE */}
 
-                            <div className="transportes">
+                        <div className="form-section">
+
+                            <div className="form-section-title">
+
+                                <h3>
+                                    02 — Meio de transporte
+                                </h3>
+
+                                <p>
+                                    Selecione os meios que
+                                    serão utilizados.
+                                </p>
+
+                            </div>
+
+
+                            <div className="transportes-viagem">
 
                                 {[
                                     "Avião",
@@ -384,36 +379,24 @@ return (
                                 ].map(
                                     (transporte) => (
 
-                                        <label
-                                            key={
-                                                transporte
-                                            }
+                                        <button
+                                            key={transporte}
+                                            type="button"
                                             className={
                                                 transportes.includes(
                                                     transporte
                                                 )
-                                                    ? "transporte-selecionado"
-                                                    : ""
+                                                    ? "transporte-opcao selecionado"
+                                                    : "transporte-opcao"
+                                            }
+                                            onClick={() =>
+                                                alternarTransporte(
+                                                    transporte
+                                                )
                                             }
                                         >
-
-                                            <input
-                                                type="checkbox"
-                                                checked={transportes.includes(
-                                                    transporte
-                                                )}
-                                                onChange={() =>
-                                                    alternarTransporte(
-                                                        transporte
-                                                    )
-                                                }
-                                            />
-
-                                            <span>
-                                                {transporte}
-                                            </span>
-
-                                        </label>
+                                            {transporte}
+                                        </button>
 
                                     )
                                 )}
@@ -422,135 +405,107 @@ return (
 
                         </div>
 
-                    </div>
 
+                        {/* MOTIVO */}
 
-                    <div className="form-section">
+                        <div className="form-section">
 
-                        <div className="form-section-title">
+                            <div className="form-section-title">
 
-                            
-
-                            <div>
                                 <h3>
-                                    03 - Despesas
+                                    03 — Motivo da viagem
                                 </h3>
 
                                 <p>
-                                    Adicione as despesas previstas para a viagem.
+                                    Explique o motivo da
+                                    viagem corporativa.
                                 </p>
+
+                            </div>
+
+
+                            <div className="campo-viagem">
+
+                                <label htmlFor="motivo">
+                                    Motivo
+                                </label>
+
+                                <textarea
+                                    id="motivo"
+                                    placeholder="Ex.: Reunião com clientes, treinamento, congresso..."
+                                    value={motivo}
+                                    onChange={(event) =>
+                                        setMotivo(
+                                            event.target.value
+                                        )
+                                    }
+                                />
+
                             </div>
 
                         </div>
 
 
-                        <TabelaDespesas
-                            despesas={
-                                despesas
-                            }
-                            setDespesas={
-                                setDespesas
-                            }
-                        />
+                        {/* AVISO FINANCEIRO */}
 
-                    </div>
+                        <div className="info-aviso">
+                            <strong>
+                                Despesas não são registradas nesta etapa.
+                            </strong>
+
+                            <p>
+                                Depois que a viagem for aprovada,
+                                você poderá registrar os gastos
+                                realizados durante o deslocamento.
+                            </p>
+                        </div>
 
 
-                    <div className="form-section">
+                        {/* AÇÕES */}
 
-                        <div className="form-section-title">
+                        <div className="form-footer-viagem">
 
-                            
+                            <p>
+                                Você pode salvar a viagem
+                                como rascunho e continuar depois,
+                                ou enviá-la para análise quando
+                                o planejamento estiver concluído.
+                            </p>
 
-                            <div>
-                                <h3>
-                                    04 - Motivo da viagem
-                                </h3>
+                            <div className="form-acoes">
 
-                                <p>
-                                    Explique o motivo da solicitação.
-                                </p>
+                                <button
+                                    type="button"
+                                    className="botao-secundario"
+                                    onClick={
+                                        salvarRascunho
+                                    }
+                                >
+                                    Salvar como rascunho
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="botao-destaque"
+                                    onClick={
+                                        enviarParaAnalise
+                                    }
+                                >
+                                    Enviar para análise
+                                </button>
+
                             </div>
 
                         </div>
 
+                    </section>
 
-                        <div className="campo">
+                </main>
 
-                            <label htmlFor="motivo">
-                                Motivo da viagem
-                            </label>
-
-                            <textarea
-                                id="motivo"
-                                rows="5"
-                                placeholder="Descreva o motivo da viagem..."
-                                value={motivo}
-                                onChange={(event) =>
-                                    setMotivo(
-                                        event.target.value
-                                    )
-                                }
-                            />
-
-                        </div>
-
-                    </div>
-
-
-                    <div className="form-footer">
-
-                        <div>
-
-                                
-                            
-
-                            <span className="form-footer-text">
-                                Pronto para finalizar? Você poderá salvar como rascunho
-                                e continuar depois.
-                            </span>
-
-                        </div>
-
-
-                        <div className="acoes">
-
-                            <button
-                                type="button"
-                                className="botao-secundario"
-                                onClick={
-                                    salvarRascunho
-                                }
-                            >
-                                Salvar como rascunho
-                            </button>
-
-                            <button
-                                type="button"
-                                className="botao-destaque"
-                                onClick={
-                                    salvarViagem
-                                }
-                            >
-                                {modoEdicao
-                                    ? "Salvar alterações"
-                                    : "Cadastrar viagem"}
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-            </main>
+            </div>
 
         </div>
-
-    </div>
-);
-
-
+    );
 }
 
 export default NovaViagem;

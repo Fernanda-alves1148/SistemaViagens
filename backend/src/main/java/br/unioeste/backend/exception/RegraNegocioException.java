@@ -1,8 +1,7 @@
 package br.unioeste.backend.exception;
 
 public class RegraNegocioException extends RuntimeException {
-
-    public RegraNegocioException(String mensagem) {
-        super(mensagem);
+    public RegraNegocioException(String message) {
+        super(message);
     }
 }

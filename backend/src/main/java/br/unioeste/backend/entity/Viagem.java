@@ -1,8 +1,6 @@
 package br.unioeste.backend.entity;
 
 import java.time.LocalDate;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,8 +9,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -22,7 +18,7 @@ public class Viagem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "idviagem")
+    @Column(name = "id_viagem")
     private Integer id;
 
     @Column(name = "data_inicio", nullable = false)
@@ -32,32 +28,35 @@ public class Viagem {
     private LocalDate dataFim;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "idorigem", nullable = false)
+    @JoinColumn(name = "id_origem", nullable = false)
     private Cidade origem;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "iddestino", nullable = false)
+    @JoinColumn(name = "id_destino", nullable = false)
     private Cidade destino;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "idmotivo")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_motivo", nullable = false)
     private Motivo motivo;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "idstatus", nullable = false)
+    @JoinColumn(name = "id_meio_transporte", nullable = false)
+    private MeioTransporte meioTransporte;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_status", nullable = false)
     private StatusViagem status;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "matricula", nullable = false)
-    private Responsavel responsavel;
+    @JoinColumn(name = "matricula_solicitante", nullable = false)
+    private Empregado solicitante;
 
-    @ManyToMany
-    @JoinTable(
-        name = "transporte",
-        joinColumns = @JoinColumn(name = "idviagem"),
-        inverseJoinColumns = @JoinColumn(name = "idmeio")
-    )
-    private Set<MeioTransporte> meiosTransporte = new LinkedHashSet<>();
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "id_historico_empregado", nullable = false)
+    private HistoricoEmpregado historicoEmpregado;
+
+    @Column(name = "justificativa", columnDefinition = "TEXT")
+    private String justificativa;
 
     protected Viagem() {
     }
@@ -68,18 +67,22 @@ public class Viagem {
         Cidade origem,
         Cidade destino,
         Motivo motivo,
+        MeioTransporte meioTransporte,
         StatusViagem status,
-        Responsavel responsavel,
-        Set<MeioTransporte> meiosTransporte
+        Empregado solicitante,
+        HistoricoEmpregado historicoEmpregado,
+        String justificativa
     ) {
         this.dataInicio = dataInicio;
         this.dataFim = dataFim;
         this.origem = origem;
         this.destino = destino;
         this.motivo = motivo;
+        this.meioTransporte = meioTransporte;
         this.status = status;
-        this.responsavel = responsavel;
-        this.meiosTransporte.addAll(meiosTransporte);
+        this.solicitante = solicitante;
+        this.historicoEmpregado = historicoEmpregado;
+        this.justificativa = justificativa;
     }
 
     public Integer getId() {
@@ -106,15 +109,31 @@ public class Viagem {
         return motivo;
     }
 
+    public MeioTransporte getMeioTransporte() {
+        return meioTransporte;
+    }
+
     public StatusViagem getStatus() {
         return status;
     }
 
-    public Responsavel getResponsavel() {
-        return responsavel;
+    public Empregado getSolicitante() {
+        return solicitante;
     }
 
-    public Set<MeioTransporte> getMeiosTransporte() {
-        return meiosTransporte;
+    public HistoricoEmpregado getHistoricoEmpregado() {
+        return historicoEmpregado;
+    }
+
+    public String getJustificativa() {
+        return justificativa;
+    }
+
+    public void setStatus(StatusViagem status) {
+        this.status = status;
+    }
+
+    public void setJustificativa(String justificativa) {
+        this.justificativa = justificativa;
     }
 }

@@ -1,0 +1,459 @@
+/* ================================
+   FILTROS DE VIAGENS
+================================ */
+
+.filtros-viagens {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+}
+
+.filtro-viagem {
+    border: 1px solid #d8dacd;
+    background: #ffffff;
+    color: #586545;
+    padding: 9px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.filtro-viagem:hover {
+    background: #f1f2ea;
+    border-color: #7c8b63;
+}
+
+.filtro-viagem.ativo {
+    background: #7c8b63;
+    border-color: #7c8b63;
+    color: #ffffff;
+}
+
+
+/* ================================
+   CARDS CLICÁVEIS
+================================ */
+
+.summary-card.clickable {
+    cursor: pointer;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.summary-card.clickable:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 6px 18px rgba(52, 54, 47, 0.08);
+}
+
+
+/* ================================
+   FORMULÁRIO
+================================ */
+
+.formulario-viagem {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-section {
+    background: #ffffff;
+    border: 1px solid #e2e3dc;
+    border-radius: 14px;
+    padding: 26px;
+    box-shadow:
+        0 2px 8px rgba(52, 54, 47, 0.04);
+}
+
+.form-section-title {
+    margin-bottom: 22px;
+}
+
+.form-section-title h3 {
+    margin: 0 0 5px;
+    color: #34362f;
+    font-size: 18px;
+}
+
+.form-section-title p {
+    margin: 0;
+    color: #7a7e73;
+    font-size: 14px;
+}
+
+.grid-formulario {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.campo-viagem {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.campo-viagem label {
+    color: #586545;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.campo-viagem input,
+.campo-viagem select,
+.campo-viagem textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d9dbd1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #34362f;
+    padding: 11px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    outline: none;
+    transition: 0.2s ease;
+}
+
+.campo-viagem input:focus,
+.campo-viagem select:focus,
+.campo-viagem textarea:focus {
+    border-color: #7c8b63;
+    box-shadow:
+        0 0 0 3px rgba(124, 139, 99, 0.12);
+}
+
+.campo-viagem textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+
+/* ================================
+   TRANSPORTE
+================================ */
+
+.transportes-viagem {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.transporte-opcao {
+    border: 1px solid #d9dbd1;
+    background: #ffffff;
+    color: #586545;
+    padding: 14px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    transition: 0.2s ease;
+}
+
+.transporte-opcao:hover {
+    border-color: #7c8b63;
+    background: #f5f6f0;
+}
+
+.transporte-opcao.selecionado {
+    border-color: #7c8b63;
+    background: #e9ede2;
+    color: #586545;
+}
+
+
+/* ================================
+   RODAPÉ DO FORMULÁRIO
+================================ */
+
+.form-footer-viagem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    background: #ffffff;
+    border: 1px solid #e2e3dc;
+    border-radius: 14px;
+    padding: 20px 24px;
+}
+
+.form-footer-viagem p {
+    margin: 0;
+    color: #7a7e73;
+    font-size: 13px;
+}
+
+.form-acoes {
+    display: flex;
+    gap: 10px;
+}
+
+.botao-secundario {
+    border: 1px solid #d1d5c8;
+    background: #ffffff;
+    color: #586545;
+    padding: 10px 17px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.botao-secundario:hover {
+    background: #f1f2ea;
+}
+
+.botao-cancelar {
+    border: 1px solid #dfcaca;
+    background: #ffffff;
+    color: #985c5c;
+    padding: 10px 17px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+
+/* ================================
+   DETALHES
+================================ */
+
+.status-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.detail-card {
+    background: #ffffff;
+    border: 1px solid #e2e3dc;
+    border-radius: 14px;
+    padding: 26px;
+    box-shadow:
+        0 2px 8px rgba(52, 54, 47, 0.04);
+}
+
+.info-grid-viagem {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+.info-item-viagem {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.info-item-viagem span {
+    color: #7a7e73;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.info-item-viagem strong {
+    color: #34362f;
+    font-size: 15px;
+}
+
+.justificativa-box {
+    margin-top: 24px;
+    padding: 18px;
+    border-left: 4px solid #b96a6a;
+    background: #f8eeee;
+    border-radius: 8px;
+}
+
+.justificativa-box span {
+    display: block;
+    color: #985c5c;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 7px;
+    text-transform: uppercase;
+}
+
+.justificativa-box p {
+    margin: 0;
+    color: #4c403f;
+    line-height: 1.6;
+}
+
+
+/* ================================
+   HISTÓRICO
+================================ */
+
+.historico {
+    display: flex;
+    flex-direction: column;
+    margin-top: 12px;
+}
+
+.historico-item {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    column-gap: 14px;
+    position: relative;
+    padding-bottom: 22px;
+}
+
+.historico-item:last-child {
+    padding-bottom: 0;
+}
+
+.historico-linha {
+    position: absolute;
+    left: 10px;
+    top: 20px;
+    bottom: 0;
+    width: 1px;
+    background: #d9dbd1;
+}
+
+.historico-item:last-child .historico-linha {
+    display: none;
+}
+
+.historico-ponto {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #7c8b63;
+    margin-top: 5px;
+    z-index: 1;
+}
+
+.historico-conteudo strong {
+    display: block;
+    color: #34362f;
+    font-size: 14px;
+}
+
+.historico-conteudo span {
+    display: block;
+    color: #7a7e73;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.historico-conteudo p {
+    margin: 7px 0 0;
+    color: #5e6258;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+
+/* ================================
+   DESPESAS
+================================ */
+
+.resumo-financeiro {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f1f2ea;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 18px;
+}
+
+.resumo-financeiro span {
+    color: #586545;
+    font-size: 13px;
+}
+
+.resumo-financeiro strong {
+    color: #34362f;
+    font-size: 22px;
+}
+
+/* ================================
+   AVISOS
+================================ */
+
+.info-aviso {
+    background: #f3f4ed;
+    border: 1px solid #dfe2d5;
+    border-radius: 12px;
+    padding: 17px 20px;
+}
+
+.info-aviso strong {
+    color: #586545;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+}
+
+.info-aviso p {
+    margin: 0;
+    color: #6f7366;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.contador-secundario {
+    min-width: 34px;
+    height: 34px;
+    padding: 0 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background: #e9ede2;
+    color: #586545;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+.status-button {
+    border: none;
+    cursor: pointer;
+}
+
+.status.ajustes {
+    background: #f5e6d2;
+    color: #9a642b;
+}
+
+.status.cancelada {
+    background: #ecece8;
+    color: #62665c;
+}
+
+/* ================================
+   RESPONSIVO
+================================ */
+
+@media (max-width: 900px) {
+
+    .grid-formulario {
+        grid-template-columns: 1fr;
+    }
+
+    .info-grid-viagem {
+        grid-template-columns: 1fr;
+    }
+
+    .transportes-viagem {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .form-footer-viagem {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .form-acoes {
+        flex-direction: column;
+    }
+}
