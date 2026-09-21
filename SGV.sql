@@ -71,19 +71,29 @@ SELECT * FROM endereco;
 
 -- Ator da Sprint
 
+CREATE TABLE area (
+    cod VARCHAR(3) PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL
+);
+INSERT INTO area (cod, nome) 
+VALUES 
+    ('TI', 'Tecnologia da Informação'),
+    ('ADM', 'Administrativo');
+SELECT * FROM area;
+
 CREATE TABLE responsavel (
     matricula SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
 	CPF VARCHAR(20) NOT NULL,
 	nro INT NOT NULL,
 	complemento VARCHAR(20) NOT NULL,
-	setor VARCHAR(20) NOT NULL,
-	idEndereco INT REFERENCES endereco(idEndereco)
+	idEndereco INT REFERENCES endereco(idEndereco),
+	cod VARCHAR(3) REFERENCES area(cod)
 );
-INSERT INTO responsavel (matricula, nome, CPF, nro, complemento, setor, idEndereco) 
+INSERT INTO responsavel (matricula, nome, CPF, nro, complemento, idEndereco, cod) 
 VALUES 
-    (1, 'Ana Paula Dias', '720.720.720.20', 72, 'casa', 'TI', 1),
-    (2, 'João Menezes', '750.750.750.50', 75, 'casa', 'TI', 2);
+    (1, 'Ana Paula Dias', '720.720.720.20', 72, 'casa', 1, 'TI'),
+    (2, 'João Menezes', '750.750.750.50', 75, 'casa', 2, 'TI');
 SELECT * FROM responsavel;
 
 -- Conatatos 
@@ -204,7 +214,7 @@ SELECT * FROM viagem;
 CREATE TABLE despesas (
 	data_despesa DATE NOT NULL,
 	descricao VARCHAR(100) NOT NULL,
-	valor MONEY NOT NULL,
+	valor NUMERIC(10,2) NOT NULL,   
 	idViagem INT REFERENCES viagem(idViagem),
 	idTipo INT REFERENCES tipo_despesa(idTipo)
 );
