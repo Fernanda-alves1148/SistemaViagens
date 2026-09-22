@@ -10,5 +10,16 @@ public interface ViagemRepository {
     Optional<Viagem> findByIdWithRelations(Integer id);
     List<Viagem> findAll();
     Viagem save(Viagem viagem);
-    void alterarStatusViagem(Integer idViagem, Integer idNovoStatus, Integer idUsuarioResponsavel, String observacao);
+
+    void atualizarHistoricoEmpregado(
+        Integer idViagem,
+        Integer idHistoricoEmpregado
+    );
+
+    void alterarStatusViagem(
+        Integer idViagem,
+        Integer idNovoStatus,
+        Integer idUsuarioResponsavel,
+        String observacao
+    );
 }

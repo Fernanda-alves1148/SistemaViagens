@@ -28,4 +28,9 @@ public class EmpregadoRepositoryImpl implements EmpregadoRepository {
         return em.createQuery("SELECT e FROM Empregado e ORDER BY e.nome", Empregado.class)
                  .getResultList();
     }
+    @Override
+public Empregado save(Empregado empregado) {
+    em.persist(empregado);
+    return empregado;
+}
 }

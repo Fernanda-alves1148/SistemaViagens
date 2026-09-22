@@ -40,4 +40,13 @@ public class HistoricoEmpregadoRepositoryImpl implements HistoricoEmpregadoRepos
         HistoricoEmpregado historico = em.find(HistoricoEmpregado.class, id);
         return Optional.ofNullable(historico);
     }
+    @Override
+public HistoricoEmpregado save(HistoricoEmpregado historico) {
+    em.persist(historico);
+    return historico;
+}
+@Override
+public void flush() {
+    em.flush();
+}
 }

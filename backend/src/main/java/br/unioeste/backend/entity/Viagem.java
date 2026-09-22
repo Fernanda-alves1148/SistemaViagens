@@ -136,4 +136,21 @@ public class Viagem {
     public void setJustificativa(String justificativa) {
         this.justificativa = justificativa;
     }
+    public void atualizar(
+    LocalDate dataInicio,
+    LocalDate dataFim,
+    Cidade origem,
+    Cidade destino,
+    Motivo motivo,
+    MeioTransporte meioTransporte,
+    String justificativa
+) {
+    this.dataInicio = dataInicio;
+    this.dataFim = dataFim;
+    this.origem = origem;
+    this.destino = destino;
+    this.motivo = motivo;
+    this.meioTransporte = meioTransporte;
+    this.justificativa = justificativa;
+}
 }

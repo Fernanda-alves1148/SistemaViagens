@@ -30,6 +30,8 @@ import br.unioeste.backend.repository.StatusViagemRepository;
 import br.unioeste.backend.repository.UsuarioRepository;
 import br.unioeste.backend.repository.ViagemRepository;
 import org.springframework.transaction.annotation.Transactional;
+import br.unioeste.backend.dto.AtualizarViagemRequest;
+
 @Service
 public class ViagemService {
 
@@ -308,6 +310,78 @@ public ViagemResponse buscarPorId(Integer id) {
     return ViagemResponse.de(viagem);
 }
 
+@Transactional
+public ViagemResponse atualizar(
+    Integer id,
+    AtualizarViagemRequest request
+) {
+    Viagem viagem = viagemRepository
+        .findByIdWithRelations(id)
+        .orElseThrow(() -> new RecursoNaoEncontradoException(
+            "Viagem não encontrada (ID: " + id + ")"
+        ));
+
+    String status = viagem.getStatus().getNome();
+
+    if (!status.equalsIgnoreCase("Rascunho")
+        && !status.equalsIgnoreCase("Ajustes")) {
+
+        throw new RegraNegocioException(
+            "Somente viagens em Rascunho ou Ajustes podem ser editadas."
+        );
+    }
+
+    if (request.dataFim().isBefore(request.dataInicio())) {
+        throw new RegraNegocioException(
+            "A data de fim não pode ser anterior à data de início."
+        );
+    }
+
+    if (request.idOrigem().equals(request.idDestino())) {
+        throw new RegraNegocioException(
+            "A cidade de origem deve ser diferente da cidade de destino."
+        );
+    }
+
+    Cidade origem = cidadeRepository
+        .findById(request.idOrigem())
+        .orElseThrow(() -> new RecursoNaoEncontradoException(
+            "Cidade de origem não encontrada."
+        ));
+
+    Cidade destino = cidadeRepository
+        .findById(request.idDestino())
+        .orElseThrow(() -> new RecursoNaoEncontradoException(
+            "Cidade de destino não encontrada."
+        ));
+
+    Motivo motivo = motivoRepository
+        .findById(request.idMotivo())
+        .orElseThrow(() -> new RecursoNaoEncontradoException(
+            "Motivo não encontrado."
+        ));
+
+    MeioTransporte meio = meioRepository
+        .findById(request.idMeioTransporte())
+        .orElseThrow(() -> new RecursoNaoEncontradoException(
+            "Meio de transporte não encontrado."
+        ));
+
+    viagem.atualizar(
+        request.dataInicio(),
+        request.dataFim(),
+        origem,
+        destino,
+        motivo,
+        meio,
+        request.justificativa()
+    );
+
+    Viagem atualizada = viagemRepository.save(viagem);
+
+    return ViagemResponse.de(atualizada);
+}
+
     /**
      * Altera o status de uma viagem.
      *
@@ -363,6 +437,31 @@ public ViagemResponse buscarPorId(Integer id) {
                 + usuario.getLogin()
             );
 
+            // Ao solicitar a viagem, registra o cargo e a área
+// vigentes exatamente nesse momento.
+if (Integer.valueOf(2).equals(request.idNovoStatus())) {
+
+    String matricula = viagem
+        .getSolicitante()
+        .getMatricula();
+
+    HistoricoEmpregado historicoAtual = historicoRepository
+        .findAtivoByMatricula(matricula)
+        .orElseThrow(() -> new RecursoNaoEncontradoException(
+            "Histórico funcional ativo não encontrado para: "
+            + matricula
+        ));
+
+    viagemRepository.atualizarHistoricoEmpregado(
+        idViagem,
+        historicoAtual.getId()
+    );
+
+    System.out.println(
+        "[REGRA] Histórico funcional atualizado na solicitação. ID: "
+        + historicoAtual.getId()
+    );
+}
 
             // ---------------------------------------------------------
             // 3. Executa função PostgreSQL

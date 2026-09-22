@@ -21,6 +21,10 @@ public class Area {
 
     protected Area() {
     }
+    
+    public Area(String nome) {
+    this.nome = nome;
+    }
 
     public Integer getId() {
         return id;

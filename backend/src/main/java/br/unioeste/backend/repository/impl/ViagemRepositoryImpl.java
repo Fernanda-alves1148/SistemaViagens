@@ -76,6 +76,21 @@ public class ViagemRepositoryImpl implements ViagemRepository {
     }
 
     @Override
+public void atualizarHistoricoEmpregado(
+    Integer idViagem,
+    Integer idHistoricoEmpregado
+) {
+    em.createNativeQuery(
+            "UPDATE viagem " +
+            "SET id_historico_empregado = :idHistorico " +
+            "WHERE id_viagem = :idViagem"
+        )
+        .setParameter("idHistorico", idHistoricoEmpregado)
+        .setParameter("idViagem", idViagem)
+        .executeUpdate();
+}
+
+    @Override
     public void alterarStatusViagem(Integer idViagem, Integer idNovoStatus, Integer idUsuarioResponsavel, String observacao) {
         // Chama a função PostgreSQL diretamente — zero magia, SQL nativo explícito
         em.createNativeQuery("SELECT alterar_status_viagem(:idViagem, :idNovoStatus, :idUsuarioResponsavel, :observacao)")

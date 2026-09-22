@@ -19,6 +19,19 @@ public class Empregado extends Pessoa {
     protected Empregado() {
     }
 
+    public Empregado(
+    String matricula,
+    String nome,
+    String cpf,
+    Endereco endereco
+) {
+    this.matricula = matricula;
+    this.nome = nome;
+    this.cpf = cpf;
+    this.endereco = endereco;
+    this.ativo = true;
+}
+
     public String getMatricula() {
         return matricula;
     }
