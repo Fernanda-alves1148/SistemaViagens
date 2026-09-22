@@ -8,4 +8,5 @@ import br.unioeste.backend.entity.Empregado;
 public interface EmpregadoRepository {
     Optional<Empregado> findById(String matricula);
     List<Empregado> findAll();
+    Empregado save(Empregado empregado);
 }

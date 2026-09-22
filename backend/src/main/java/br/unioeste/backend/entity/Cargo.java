@@ -22,6 +22,10 @@ public class Cargo {
     protected Cargo() {
     }
 
+    public Cargo(String nome) {
+    this.nome = nome;
+}
+
     public Integer getId() {
         return id;
     }

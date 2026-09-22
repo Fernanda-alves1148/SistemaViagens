@@ -42,6 +42,19 @@ public class HistoricoEmpregado {
     protected HistoricoEmpregado() {
     }
 
+
+    public HistoricoEmpregado(
+    Empregado empregado,
+    Cargo cargo,
+    Area area,
+    LocalDate dataInicio
+) {
+    this.empregado = empregado;
+    this.cargo = cargo;
+    this.area = area;
+    this.dataInicio = dataInicio;
+    this.dataFim = null;
+}
     public Integer getId() {
         return id;
     }
@@ -65,4 +78,7 @@ public class HistoricoEmpregado {
     public LocalDate getDataFim() {
         return dataFim;
     }
+    public void encerrarEm(LocalDate dataFim) {
+    this.dataFim = dataFim;
+}
 }

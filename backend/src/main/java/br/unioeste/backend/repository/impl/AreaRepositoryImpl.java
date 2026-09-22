@@ -21,4 +21,19 @@ public class AreaRepositoryImpl implements AreaRepository {
         Area area = em.find(Area.class, id);
         return Optional.ofNullable(area);
     }
+
+    @Override
+public java.util.List<Area> findAll() {
+    return em.createQuery(
+        "SELECT a FROM Area a ORDER BY a.nome",
+        Area.class
+    ).getResultList();
+}
+
+@Override
+public Area save(Area area) {
+    em.persist(area);
+    return area;
+}
+
 }
