@@ -1,0 +1,256 @@
+/* ================================
+   DASHBOARD GERENCIAL
+   Segue o padrão visual das demais
+   telas (gestao.css / viagens.css).
+================================ */
+
+.indicadores-dashboard {
+    grid-template-columns:
+        repeat(auto-fit, minmax(230px, 1fr));
+}
+
+.valor-indicador {
+    font-size: 19px;
+}
+
+.destino-indicador {
+    font-size: 17px;
+}
+
+
+/* ================================
+   GRADE DE GRÁFICOS
+================================ */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.grafico-card {
+    background: #ffffff;
+    border: 1px solid #e2e3dc;
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow:
+        0 2px 8px rgba(52, 54, 47, 0.04);
+}
+
+.grafico-titulo {
+    margin-bottom: 22px;
+}
+
+.grafico-titulo h3 {
+    margin: 0 0 5px;
+    color: #34362f;
+    font-size: 17px;
+}
+
+.grafico-titulo p {
+    margin: 0;
+    color: #7a7e73;
+    font-size: 13px;
+}
+
+
+/* ================================
+   ROSCA (SITUAÇÃO)
+================================ */
+
+.grafico-corpo {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.rosca {
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rosca-centro {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.rosca-centro strong {
+    color: #34362f;
+    font-size: 26px;
+    line-height: 1;
+}
+
+.rosca-centro span {
+    color: #7a7e73;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.rosca-legenda {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 11px;
+    flex: 1;
+    min-width: 170px;
+}
+
+.rosca-legenda li {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    color: #5e6258;
+    font-size: 13px;
+}
+
+.rosca-legenda li strong {
+    margin-left: auto;
+    color: #34362f;
+    font-size: 14px;
+}
+
+.legenda-cor {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+
+/* ================================
+   BARRAS VERTICAIS (TIPO)
+================================ */
+
+.barras-verticais {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    min-height: 230px;
+    padding-top: 10px;
+}
+
+.barra-coluna {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.barra-valor {
+    color: #586545;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.barra-area {
+    width: 100%;
+    max-width: 64px;
+    height: 150px;
+    display: flex;
+    align-items: flex-end;
+    background: #f1f2ea;
+    border-radius: 7px 7px 0 0;
+    overflow: hidden;
+}
+
+.barra-preenchimento {
+    width: 100%;
+    background: #7c8b63;
+    border-radius: 7px 7px 0 0;
+    transition: height 0.4s ease;
+}
+
+.barra-rotulo {
+    color: #5e6258;
+    font-size: 12px;
+    text-align: center;
+}
+
+
+/* ================================
+   LISTA COM BARRAS (DESTINOS)
+================================ */
+
+.lista-barras {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.item-barra-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 7px;
+}
+
+.item-barra-info strong {
+    color: #34362f;
+    font-size: 14px;
+}
+
+.item-barra-info span {
+    color: #586545;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.item-barra-trilho {
+    height: 12px;
+    border-radius: 8px;
+    background: #f1f2ea;
+    overflow: hidden;
+}
+
+.item-barra-preenchimento {
+    height: 100%;
+    border-radius: 8px;
+    background: #7c8b63;
+    transition: width 0.4s ease;
+}
+
+
+/* ================================
+   RESPONSIVO
+================================ */
+
+@media (max-width: 1000px) {
+
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+
+    .grafico-corpo {
+        justify-content: center;
+    }
+
+    .barras-verticais {
+        gap: 10px;
+    }
+
+    .barra-valor {
+        font-size: 10px;
+    }
+}
