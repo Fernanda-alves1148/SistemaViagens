@@ -29,7 +29,7 @@ import br.unioeste.backend.repository.MotivoRepository;
 import br.unioeste.backend.repository.StatusViagemRepository;
 import br.unioeste.backend.repository.UsuarioRepository;
 import br.unioeste.backend.repository.ViagemRepository;
-
+import org.springframework.transaction.annotation.Transactional;
 @Service
 public class ViagemService {
 
@@ -289,6 +289,24 @@ public class ViagemService {
         }
     }
 
+    @Transactional(readOnly = true)
+public List<ViagemResponse> listar() {
+    return viagemRepository.findAll()
+        .stream()
+        .map(ViagemResponse::de)
+        .toList();
+}
+
+@Transactional(readOnly = true)
+public ViagemResponse buscarPorId(Integer id) {
+    Viagem viagem = viagemRepository
+        .findByIdWithRelations(id)
+        .orElseThrow(() -> new RecursoNaoEncontradoException(
+            "Viagem não encontrada (ID: " + id + ")"
+        ));
+
+    return ViagemResponse.de(viagem);
+}
 
     /**
      * Altera o status de uma viagem.

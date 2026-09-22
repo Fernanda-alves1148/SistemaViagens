@@ -19,11 +19,11 @@ public class Logradouro {
     @Column(name = "id_logradouro")
     private Integer id;
 
-    @Column(name = "nome", nullable = false, length = 120)
+    @Column(name = "nome", nullable = false, length = 100)
     private String nome;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_tipo_log", nullable = false)
+    @JoinColumn(name = "sigla_tipo", nullable = false)
     private TipoLogradouro tipo;
 
     protected Logradouro() {

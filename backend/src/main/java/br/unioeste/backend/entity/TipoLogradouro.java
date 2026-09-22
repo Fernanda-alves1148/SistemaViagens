@@ -2,8 +2,6 @@ package br.unioeste.backend.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -12,21 +10,20 @@ import jakarta.persistence.Table;
 public class TipoLogradouro {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id_tipo_log")
-    private Integer id;
+    @Column(name = "sigla_tipo", length = 2)
+    private String sigla;
 
-    @Column(name = "descricao", nullable = false, length = 30, unique = true)
-    private String descricao;
+    @Column(name = "nome", nullable = false, length = 50, unique = true)
+    private String nome;
 
     protected TipoLogradouro() {
     }
 
-    public Integer getId() {
-        return id;
+    public String getSigla() {
+        return sigla;
     }
 
-    public String getDescricao() {
-        return descricao;
+    public String getNome() {
+        return nome;
     }
 }

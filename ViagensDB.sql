@@ -8,7 +8,7 @@
 -- Ele recria as tabelas do sistema.
 -- ============================================================
 
-BEGIN;
+
 
 -- ------------------------------------------------------------
 -- 1. LIMPEZA
@@ -38,7 +38,7 @@ DROP TABLE IF EXISTS uf CASCADE;
 -- ------------------------------------------------------------
 
 CREATE TABLE uf (
-    sigla_uf CHAR(2) PRIMARY KEY,
+    sigla_uf VARCHAR(2) PRIMARY KEY,
     nome VARCHAR(50) NOT NULL UNIQUE
 );
 
@@ -50,7 +50,7 @@ INSERT INTO uf (sigla_uf, nome) VALUES
 CREATE TABLE cidade (
     id_cidade SERIAL PRIMARY KEY,
     nome VARCHAR(50) NOT NULL,
-    sigla_uf CHAR(2) NOT NULL REFERENCES uf(sigla_uf),
+    sigla_uf VARCHAR(2) NOT NULL REFERENCES uf(sigla_uf),
     UNIQUE (nome, sigla_uf)
 );
 
@@ -62,7 +62,7 @@ INSERT INTO cidade (nome, sigla_uf) VALUES
     ('São Paulo', 'SP');
 
 CREATE TABLE tipo_logradouro (
-    sigla_tipo CHAR(2) PRIMARY KEY,
+    sigla_tipo VARCHAR(2) PRIMARY KEY,
     nome VARCHAR(50) NOT NULL UNIQUE
 );
 
@@ -73,7 +73,7 @@ INSERT INTO tipo_logradouro (sigla_tipo, nome) VALUES
 CREATE TABLE logradouro (
     id_logradouro SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
-    sigla_tipo CHAR(2) NOT NULL REFERENCES tipo_logradouro(sigla_tipo),
+    sigla_tipo VARCHAR(2) NOT NULL REFERENCES tipo_logradouro(sigla_tipo),
     UNIQUE (nome, sigla_tipo)
 );
 
@@ -355,7 +355,7 @@ CREATE TABLE despesa (
     id_tipo INT NOT NULL REFERENCES tipo_despesa(id_tipo),
 
     CONSTRAINT ck_despesa_valor
-        CHECK (valor > 0),
+        CHECK (valor > 0)
 );
 
 -- ------------------------------------------------------------
@@ -736,7 +736,7 @@ FROM viagem v
 LEFT JOIN despesa d ON d.id_viagem = v.id_viagem
 GROUP BY v.id_viagem;
 
-COMMIT;
+
 
 -- ============================================================
 -- 15. CONSULTAS DE TESTE
@@ -832,7 +832,7 @@ GRANT sgv_app TO sgv_app_user;
 GRANT sgv_consulta TO sgv_consulta_user;
 
 -- 4. Permissão de conexão
-GRANT CONNECT ON DATABASE sgv TO sgv_admin, sgv_app, sgv_consulta;
+GRANT CONNECT ON DATABASE sistema_viagens TO sgv_admin, sgv_app, sgv_consulta;
 
 -- 5. Administrador: acesso total ao schema público.
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO sgv_admin;
