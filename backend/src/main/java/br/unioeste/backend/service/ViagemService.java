@@ -8,6 +8,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 
+import br.unioeste.backend.dto.AcaoStatusViagemRequest;
 import br.unioeste.backend.dto.AlterarStatusRequest;
 import br.unioeste.backend.dto.CriarViagemRequest;
 import br.unioeste.backend.dto.HistoricoStatusResponse;
@@ -386,7 +387,84 @@ public class ViagemService {
 
         return ViagemResponse.de(atualizada);
     }
+public void solicitar(
+    Integer idViagem,
+    AcaoStatusViagemRequest request
+) {
+    alterarStatus(
+        idViagem,
+        new AlterarStatusRequest(
+            2,
+            request.idUsuarioResponsavel(),
+            request.observacao()
+        )
+    );
+}
 
+public void cancelar(
+    Integer idViagem,
+    AcaoStatusViagemRequest request
+) {
+    alterarStatus(
+        idViagem,
+        new AlterarStatusRequest(
+            6,
+            request.idUsuarioResponsavel(),
+            request.observacao()
+        )
+    );
+}
+
+public void solicitarAjustes(
+    Integer idViagem,
+    AcaoStatusViagemRequest request
+) {
+    if (
+        request.observacao() == null
+        || request.observacao().isBlank()
+    ) {
+        throw new RegraNegocioException(
+            "A observação é obrigatória ao solicitar ajustes."
+        );
+    }
+
+    alterarStatus(
+        idViagem,
+        new AlterarStatusRequest(
+            3,
+            request.idUsuarioResponsavel(),
+            request.observacao()
+        )
+    );
+}
+
+public void aprovar(
+    Integer idViagem,
+    AcaoStatusViagemRequest request
+) {
+    alterarStatus(
+        idViagem,
+        new AlterarStatusRequest(
+            4,
+            request.idUsuarioResponsavel(),
+            request.observacao()
+        )
+    );
+}
+
+public void rejeitar(
+    Integer idViagem,
+    AcaoStatusViagemRequest request
+) {
+    alterarStatus(
+        idViagem,
+        new AlterarStatusRequest(
+            5,
+            request.idUsuarioResponsavel(),
+            request.observacao()
+        )
+    );
+}
     /**
      * Altera o status de uma viagem.
      *
