@@ -10,6 +10,7 @@ import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import br.unioeste.backend.dto.AlterarStatusRequest;
 import br.unioeste.backend.dto.CriarViagemRequest;
+import br.unioeste.backend.dto.HistoricoStatusResponse;
 import br.unioeste.backend.dto.ViagemResponse;
 import br.unioeste.backend.entity.Cidade;
 import br.unioeste.backend.entity.Empregado;
@@ -24,6 +25,7 @@ import br.unioeste.backend.exception.RegraNegocioException;
 import br.unioeste.backend.repository.CidadeRepository;
 import br.unioeste.backend.repository.EmpregadoRepository;
 import br.unioeste.backend.repository.HistoricoEmpregadoRepository;
+import br.unioeste.backend.repository.HistoricoStatusViagemRepository;
 import br.unioeste.backend.repository.MeioTransporteRepository;
 import br.unioeste.backend.repository.MotivoRepository;
 import br.unioeste.backend.repository.StatusViagemRepository;
@@ -43,6 +45,7 @@ public class ViagemService {
     private final MeioTransporteRepository meioRepository;
     private final HistoricoEmpregadoRepository historicoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final HistoricoStatusViagemRepository historicoStatusRepository;
 
     private final PlatformTransactionManager transactionManager;
 
@@ -55,6 +58,7 @@ public class ViagemService {
         MeioTransporteRepository meioRepository,
         HistoricoEmpregadoRepository historicoRepository,
         UsuarioRepository usuarioRepository,
+        HistoricoStatusViagemRepository historicoStatusRepository,
         PlatformTransactionManager transactionManager
     ) {
         this.viagemRepository = viagemRepository;
@@ -65,6 +69,7 @@ public class ViagemService {
         this.meioRepository = meioRepository;
         this.historicoRepository = historicoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.historicoStatusRepository = historicoStatusRepository;
         this.transactionManager = transactionManager;
     }
 
@@ -292,95 +297,95 @@ public class ViagemService {
     }
 
     @Transactional(readOnly = true)
-public List<ViagemResponse> listar() {
-    return viagemRepository.findAll()
-        .stream()
-        .map(ViagemResponse::de)
-        .toList();
-}
-
-@Transactional(readOnly = true)
-public ViagemResponse buscarPorId(Integer id) {
-    Viagem viagem = viagemRepository
-        .findByIdWithRelations(id)
-        .orElseThrow(() -> new RecursoNaoEncontradoException(
-            "Viagem não encontrada (ID: " + id + ")"
-        ));
-
-    return ViagemResponse.de(viagem);
-}
-
-@Transactional
-public ViagemResponse atualizar(
-    Integer id,
-    AtualizarViagemRequest request
-) {
-    Viagem viagem = viagemRepository
-        .findByIdWithRelations(id)
-        .orElseThrow(() -> new RecursoNaoEncontradoException(
-            "Viagem não encontrada (ID: " + id + ")"
-        ));
-
-    String status = viagem.getStatus().getNome();
-
-    if (!status.equalsIgnoreCase("Rascunho")
-        && !status.equalsIgnoreCase("Ajustes")) {
-
-        throw new RegraNegocioException(
-            "Somente viagens em Rascunho ou Ajustes podem ser editadas."
-        );
+    public List<ViagemResponse> listar() {
+        return viagemRepository.findAll()
+            .stream()
+            .map(ViagemResponse::de)
+            .toList();
     }
 
-    if (request.dataFim().isBefore(request.dataInicio())) {
-        throw new RegraNegocioException(
-            "A data de fim não pode ser anterior à data de início."
-        );
+    @Transactional(readOnly = true)
+    public ViagemResponse buscarPorId(Integer id) {
+        Viagem viagem = viagemRepository
+            .findByIdWithRelations(id)
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Viagem não encontrada (ID: " + id + ")"
+            ));
+
+        return ViagemResponse.de(viagem);
     }
 
-    if (request.idOrigem().equals(request.idDestino())) {
-        throw new RegraNegocioException(
-            "A cidade de origem deve ser diferente da cidade de destino."
+    @Transactional
+    public ViagemResponse atualizar(
+        Integer id,
+        AtualizarViagemRequest request
+    ) {
+        Viagem viagem = viagemRepository
+            .findByIdWithRelations(id)
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Viagem não encontrada (ID: " + id + ")"
+            ));
+
+        String status = viagem.getStatus().getNome();
+
+        if (!status.equalsIgnoreCase("Rascunho")
+            && !status.equalsIgnoreCase("Ajustes")) {
+
+            throw new RegraNegocioException(
+                "Somente viagens em Rascunho ou Ajustes podem ser editadas."
+            );
+        }
+
+        if (request.dataFim().isBefore(request.dataInicio())) {
+            throw new RegraNegocioException(
+                "A data de fim não pode ser anterior à data de início."
+            );
+        }
+
+        if (request.idOrigem().equals(request.idDestino())) {
+            throw new RegraNegocioException(
+                "A cidade de origem deve ser diferente da cidade de destino."
+            );
+        }
+
+        Cidade origem = cidadeRepository
+            .findById(request.idOrigem())
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Cidade de origem não encontrada."
+            ));
+
+        Cidade destino = cidadeRepository
+            .findById(request.idDestino())
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Cidade de destino não encontrada."
+            ));
+
+        Motivo motivo = motivoRepository
+            .findById(request.idMotivo())
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Motivo não encontrado."
+            ));
+
+        MeioTransporte meio = meioRepository
+            .findById(request.idMeioTransporte())
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Meio de transporte não encontrado."
+            ));
+
+        viagem.atualizar(
+            request.dataInicio(),
+            request.dataFim(),
+            origem,
+            destino,
+            motivo,
+            meio,
+            request.justificativa()
         );
+
+        Viagem atualizada = viagemRepository.save(viagem);
+
+        return ViagemResponse.de(atualizada);
     }
-
-    Cidade origem = cidadeRepository
-        .findById(request.idOrigem())
-        .orElseThrow(() -> new RecursoNaoEncontradoException(
-            "Cidade de origem não encontrada."
-        ));
-
-    Cidade destino = cidadeRepository
-        .findById(request.idDestino())
-        .orElseThrow(() -> new RecursoNaoEncontradoException(
-            "Cidade de destino não encontrada."
-        ));
-
-    Motivo motivo = motivoRepository
-        .findById(request.idMotivo())
-        .orElseThrow(() -> new RecursoNaoEncontradoException(
-            "Motivo não encontrado."
-        ));
-
-    MeioTransporte meio = meioRepository
-        .findById(request.idMeioTransporte())
-        .orElseThrow(() -> new RecursoNaoEncontradoException(
-            "Meio de transporte não encontrado."
-        ));
-
-    viagem.atualizar(
-        request.dataInicio(),
-        request.dataFim(),
-        origem,
-        destino,
-        motivo,
-        meio,
-        request.justificativa()
-    );
-
-    Viagem atualizada = viagemRepository.save(viagem);
-
-    return ViagemResponse.de(atualizada);
-}
 
     /**
      * Altera o status de uma viagem.
@@ -438,30 +443,30 @@ public ViagemResponse atualizar(
             );
 
             // Ao solicitar a viagem, registra o cargo e a área
-// vigentes exatamente nesse momento.
-if (Integer.valueOf(2).equals(request.idNovoStatus())) {
+            // vigentes exatamente nesse momento.
+            if (Integer.valueOf(2).equals(request.idNovoStatus())) {
 
-    String matricula = viagem
-        .getSolicitante()
-        .getMatricula();
+                String matricula = viagem
+                    .getSolicitante()
+                    .getMatricula();
 
-    HistoricoEmpregado historicoAtual = historicoRepository
-        .findAtivoByMatricula(matricula)
-        .orElseThrow(() -> new RecursoNaoEncontradoException(
-            "Histórico funcional ativo não encontrado para: "
-            + matricula
-        ));
+                HistoricoEmpregado historicoAtual = historicoRepository
+                    .findAtivoByMatricula(matricula)
+                    .orElseThrow(() -> new RecursoNaoEncontradoException(
+                        "Histórico funcional ativo não encontrado para: "
+                        + matricula
+                    ));
 
-    viagemRepository.atualizarHistoricoEmpregado(
-        idViagem,
-        historicoAtual.getId()
-    );
+                viagemRepository.atualizarHistoricoEmpregado(
+                    idViagem,
+                    historicoAtual.getId()
+                );
 
-    System.out.println(
-        "[REGRA] Histórico funcional atualizado na solicitação. ID: "
-        + historicoAtual.getId()
-    );
-}
+                System.out.println(
+                    "[REGRA] Histórico funcional atualizado na solicitação. ID: "
+                    + historicoAtual.getId()
+                );
+            }
 
             // ---------------------------------------------------------
             // 3. Executa função PostgreSQL
@@ -622,5 +627,24 @@ if (Integer.valueOf(2).equals(request.idNovoStatus())) {
                 "A matrícula deve possuir o formato XXXX-X."
             );
         }
+    }
+
+    /**
+     * Lista o histórico de status de uma viagem.
+     */
+    @Transactional(readOnly = true)
+    public List<HistoricoStatusResponse> listarHistorico(
+        Integer idViagem
+    ) {
+        viagemRepository.findById(idViagem)
+            .orElseThrow(() -> new RecursoNaoEncontradoException(
+                "Viagem não encontrada (ID: " + idViagem + ")"
+            ));
+
+        return historicoStatusRepository
+            .findByViagemId(idViagem)
+            .stream()
+            .map(HistoricoStatusResponse::de)
+            .toList();
     }
 }
