@@ -1,6 +1,8 @@
 package br.unioeste.backend.entity;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,6 +11,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -39,9 +43,13 @@ public class Viagem {
     @JoinColumn(name = "id_motivo", nullable = false)
     private Motivo motivo;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "id_meio_transporte", nullable = false)
-    private MeioTransporte meioTransporte;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "transporte",
+        joinColumns = @JoinColumn(name = "id_viagem"),
+        inverseJoinColumns = @JoinColumn(name = "id_meio")
+    )
+    private Set<MeioTransporte> meiosTransporte = new LinkedHashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_status", nullable = false)
@@ -67,7 +75,7 @@ public class Viagem {
         Cidade origem,
         Cidade destino,
         Motivo motivo,
-        MeioTransporte meioTransporte,
+        Set<MeioTransporte> meiosTransporte,
         StatusViagem status,
         Empregado solicitante,
         HistoricoEmpregado historicoEmpregado,
@@ -78,7 +86,7 @@ public class Viagem {
         this.origem = origem;
         this.destino = destino;
         this.motivo = motivo;
-        this.meioTransporte = meioTransporte;
+        this.meiosTransporte = new LinkedHashSet<>(meiosTransporte);
         this.status = status;
         this.solicitante = solicitante;
         this.historicoEmpregado = historicoEmpregado;
@@ -109,8 +117,8 @@ public class Viagem {
         return motivo;
     }
 
-    public MeioTransporte getMeioTransporte() {
-        return meioTransporte;
+    public Set<MeioTransporte> getMeiosTransporte() {
+        return meiosTransporte;
     }
 
     public StatusViagem getStatus() {
@@ -142,7 +150,7 @@ public class Viagem {
     Cidade origem,
     Cidade destino,
     Motivo motivo,
-    MeioTransporte meioTransporte,
+    Set<MeioTransporte> meiosTransporte,
     String justificativa
 ) {
     this.dataInicio = dataInicio;
@@ -150,7 +158,8 @@ public class Viagem {
     this.origem = origem;
     this.destino = destino;
     this.motivo = motivo;
-    this.meioTransporte = meioTransporte;
+    this.meiosTransporte.clear();
+    this.meiosTransporte.addAll(meiosTransporte);
     this.justificativa = justificativa;
 }
 }

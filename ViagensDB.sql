@@ -15,6 +15,7 @@
 -- ------------------------------------------------------------
 DROP TABLE IF EXISTS despesa CASCADE;
 DROP TABLE IF EXISTS historico_status_viagem CASCADE;
+DROP TABLE IF EXISTS transporte CASCADE;
 DROP TABLE IF EXISTS viagem CASCADE;
 DROP TABLE IF EXISTS usuario_perfil CASCADE;
 DROP TABLE IF EXISTS usuario CASCADE;
@@ -294,7 +295,6 @@ CREATE TABLE viagem (
     id_destino INT NOT NULL REFERENCES cidade(id_cidade),
 
     id_motivo INT NOT NULL REFERENCES motivo(id_motivo),
-    id_meio_transporte INT NOT NULL REFERENCES meio_transporte(id_meio),
 
     id_status INT NOT NULL DEFAULT 1 REFERENCES status_viagem(id_status),
 
@@ -311,6 +311,16 @@ CREATE TABLE viagem (
         CHECK (data_fim >= data_inicio)
 );
 
+-- Entidade associativa entre viagem e meio de transporte.
+-- Uma viagem pode utilizar vários meios, sem repetir o mesmo meio.
+CREATE TABLE transporte (
+    id_viagem INT NOT NULL
+        REFERENCES viagem(id_viagem) ON DELETE CASCADE,
+    id_meio INT NOT NULL
+        REFERENCES meio_transporte(id_meio),
+
+    PRIMARY KEY (id_viagem, id_meio)
+);
 -- ------------------------------------------------------------
 -- 10. HISTÓRICO DE STATUS DA VIAGEM
 -- ------------------------------------------------------------
@@ -344,7 +354,8 @@ INSERT INTO tipo_despesa (nome) VALUES
     ('Transporte'),
     ('Combustível'),
     ('Pedágio'),
-    ('Outras');
+    ('Outras'),
+    ('Táxi');
 
 CREATE TABLE despesa (
     id_despesa SERIAL PRIMARY KEY,
@@ -707,7 +718,12 @@ SELECT
     cd.nome AS cidade_destino,
     ufd.sigla_uf AS uf_destino,
     mo.nome AS motivo,
-    mt.nome AS meio_transporte,
+    (
+        SELECT STRING_AGG(mt.nome, ', ' ORDER BY mt.nome)
+        FROM transporte t
+        JOIN meio_transporte mt ON mt.id_meio = t.id_meio
+        WHERE t.id_viagem = v.id_viagem
+    ) AS meios_transporte,
     sv.nome AS status,
     e.matricula,
     e.nome AS solicitante,
@@ -720,7 +736,6 @@ JOIN uf ufo ON ufo.sigla_uf = co.sigla_uf
 JOIN cidade cd ON cd.id_cidade = v.id_destino
 JOIN uf ufd ON ufd.sigla_uf = cd.sigla_uf
 JOIN motivo mo ON mo.id_motivo = v.id_motivo
-JOIN meio_transporte mt ON mt.id_meio = v.id_meio_transporte
 JOIN status_viagem sv ON sv.id_status = v.id_status
 JOIN empregado e ON e.matricula = v.matricula_solicitante
 JOIN historico_empregado he ON he.id_historico_empregado = v.id_historico_empregado

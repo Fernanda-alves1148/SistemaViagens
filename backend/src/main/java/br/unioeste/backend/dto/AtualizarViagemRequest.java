@@ -1,7 +1,9 @@
 package br.unioeste.backend.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 public record AtualizarViagemRequest(
@@ -21,8 +23,8 @@ public record AtualizarViagemRequest(
     @NotNull(message = "O motivo é obrigatório")
     Integer idMotivo,
 
-    @NotNull(message = "O meio de transporte é obrigatório")
-    Integer idMeioTransporte,
+    @NotEmpty(message = "Informe pelo menos um meio de transporte")
+    List<@NotNull(message = "O meio de transporte não pode ser nulo") Integer> idsMeiosTransporte,
 
     String justificativa
 

@@ -1,6 +1,7 @@
 package br.unioeste.backend.dto;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import br.unioeste.backend.entity.Viagem;
 
@@ -13,7 +14,7 @@ public record ViagemResponse(
     String destino,
     String ufDestino,
     String motivo,
-    String meioTransporte,
+    List<String> meiosTransporte,
     String status,
     String solicitante,
     String cargoNoMomento,
@@ -39,7 +40,10 @@ public record ViagemResponse(
             viagem.getDestino().getNome(),
             viagem.getDestino().getSiglaUf(),
             viagem.getMotivo().getNome(),
-            viagem.getMeioTransporte().getNome(),
+            viagem.getMeiosTransporte().stream()
+                .map(meio -> meio.getNome())
+                .sorted()
+                .toList(),
             viagem.getStatus().getNome(),
             viagem.getSolicitante().getNome(),
             cargo,
