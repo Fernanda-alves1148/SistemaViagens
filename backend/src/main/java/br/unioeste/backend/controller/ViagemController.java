@@ -21,7 +21,7 @@ import br.unioeste.backend.dto.ViagemResponse;
 import br.unioeste.backend.service.ViagemService;
 import br.unioeste.backend.dto.AtualizarViagemRequest;
 import org.springframework.web.bind.annotation.PutMapping;
-
+import br.unioeste.backend.dto.HistoricoStatusResponse;
 @RestController
 @RequestMapping("/api/viagens")
 public class ViagemController {
@@ -73,4 +73,12 @@ public ResponseEntity<ViagemResponse> atualizar(
 
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/{id}/historico")
+public ResponseEntity<List<HistoricoStatusResponse>> listarHistorico(
+    @PathVariable Integer id
+) {
+    return ResponseEntity.ok(
+        viagemService.listarHistorico(id)
+    );
+}
 }
