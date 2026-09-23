@@ -1,7 +1,9 @@
 package br.unioeste.backend.service;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -204,19 +206,15 @@ public class ViagemService {
 
 
             // ---------------------------------------------------------
-            // 7. Busca meio de transporte
+            // 7. Busca os meios de transporte
             // ---------------------------------------------------------
 
-            MeioTransporte meio = meioRepository
-                .findById(request.idMeioTransporte())
-                .orElseThrow(() -> new RecursoNaoEncontradoException(
-                    "Meio de transporte não encontrado (ID: "
-                    + request.idMeioTransporte() + ")"
-                ));
+            Set<MeioTransporte> meios = buscarMeiosTransporte(
+                request.idsMeiosTransporte()
+            );
 
             System.out.println(
-                "[REPOSITORY] Meio: "
-                + meio.getNome()
+                "[REPOSITORY] Meios encontrados: " + meios.size()
             );
 
 
@@ -230,7 +228,7 @@ public class ViagemService {
                 origem,
                 destino,
                 motivo,
-                meio,
+                meios,
                 status,
                 solicitante,
                 historico,
@@ -367,11 +365,9 @@ public class ViagemService {
                 "Motivo não encontrado."
             ));
 
-        MeioTransporte meio = meioRepository
-            .findById(request.idMeioTransporte())
-            .orElseThrow(() -> new RecursoNaoEncontradoException(
-                "Meio de transporte não encontrado."
-            ));
+        Set<MeioTransporte> meios = buscarMeiosTransporte(
+            request.idsMeiosTransporte()
+        );
 
         viagem.atualizar(
             request.dataInicio(),
@@ -379,7 +375,7 @@ public class ViagemService {
             origem,
             destino,
             motivo,
-            meio,
+            meios,
             request.justificativa()
         );
 
@@ -596,6 +592,22 @@ public void rejeitar(
     /**
      * Valida os dados básicos utilizados no cadastro da viagem.
      */
+    private Set<MeioTransporte> buscarMeiosTransporte(List<Integer> idsMeios) {
+        Set<MeioTransporte> meios = new LinkedHashSet<>();
+
+        for (Integer idMeio : idsMeios) {
+            MeioTransporte meio = meioRepository
+                .findById(idMeio)
+                .orElseThrow(() -> new RecursoNaoEncontradoException(
+                    "Meio de transporte não encontrado (ID: " + idMeio + ")"
+                ));
+
+            meios.add(meio);
+        }
+
+        return meios;
+    }
+
     private void validar(CriarViagemRequest request) {
 
         if (request == null) {
@@ -673,9 +685,10 @@ public void rejeitar(
         // Meio de transporte
         // -------------------------------------------------------------
 
-        if (request.idMeioTransporte() == null) {
+        if (request.idsMeiosTransporte() == null
+            || request.idsMeiosTransporte().isEmpty()) {
             throw new RegraNegocioException(
-                "O meio de transporte é obrigatório."
+                "Informe pelo menos um meio de transporte."
             );
         }
 

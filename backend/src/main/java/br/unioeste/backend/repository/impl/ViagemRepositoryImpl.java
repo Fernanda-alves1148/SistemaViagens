@@ -31,7 +31,7 @@ public class ViagemRepositoryImpl implements ViagemRepository {
                     "LEFT JOIN FETCH v.origem " +
                     "LEFT JOIN FETCH v.destino " +
                     "LEFT JOIN FETCH v.motivo " +
-                    "LEFT JOIN FETCH v.meioTransporte " +
+                    "LEFT JOIN FETCH v.meiosTransporte " +
                     "LEFT JOIN FETCH v.status " +
                     "LEFT JOIN FETCH v.solicitante " +
                     "LEFT JOIN FETCH v.historicoEmpregado he " +
@@ -54,7 +54,7 @@ public class ViagemRepositoryImpl implements ViagemRepository {
                 "LEFT JOIN FETCH v.origem " +
                 "LEFT JOIN FETCH v.destino " +
                 "LEFT JOIN FETCH v.motivo " +
-                "LEFT JOIN FETCH v.meioTransporte " +
+                "LEFT JOIN FETCH v.meiosTransporte " +
                 "LEFT JOIN FETCH v.status " +
                 "LEFT JOIN FETCH v.solicitante " +
                 "LEFT JOIN FETCH v.historicoEmpregado he " +
