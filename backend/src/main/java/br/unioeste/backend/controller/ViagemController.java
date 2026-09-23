@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.unioeste.backend.dto.AlterarStatusRequest;
+import br.unioeste.backend.dto.AcaoStatusViagemRequest;
+import br.unioeste.backend.dto.AtualizarViagemRequest;
 import br.unioeste.backend.dto.CriarViagemRequest;
+import br.unioeste.backend.dto.HistoricoStatusResponse;
 import br.unioeste.backend.dto.ViagemResponse;
 import br.unioeste.backend.service.ViagemService;
-import br.unioeste.backend.dto.AtualizarViagemRequest;
-import org.springframework.web.bind.annotation.PutMapping;
-import br.unioeste.backend.dto.HistoricoStatusResponse;
+
 @RestController
 @RequestMapping("/api/viagens")
 public class ViagemController {
@@ -41,44 +41,81 @@ public class ViagemController {
     public ResponseEntity<ViagemResponse> buscarPorId(
         @PathVariable Integer id
     ) {
-        return ResponseEntity.ok(viagemService.buscarPorId(id));
+        return ResponseEntity.ok(
+            viagemService.buscarPorId(id)
+        );
     }
 
     @PostMapping
     public ResponseEntity<ViagemResponse> cadastrar(
         @Valid @RequestBody CriarViagemRequest request
     ) {
-        ViagemResponse response = viagemService.cadastrar(request);
-
         return ResponseEntity
             .status(HttpStatus.CREATED)
-            .body(response);
+            .body(viagemService.cadastrar(request));
     }
-@PutMapping("/{id}")
-public ResponseEntity<ViagemResponse> atualizar(
-    @PathVariable Integer id,
-    @Valid @RequestBody AtualizarViagemRequest request
-) {
-    return ResponseEntity.ok(
-        viagemService.atualizar(id, request)
-    );
-}
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<Void> alterarStatus(
+    @PutMapping("/{id}")
+    public ResponseEntity<ViagemResponse> atualizar(
         @PathVariable Integer id,
-        @Valid @RequestBody AlterarStatusRequest request
+        @Valid @RequestBody AtualizarViagemRequest request
     ) {
-        viagemService.alterarStatus(id, request);
+        return ResponseEntity.ok(
+            viagemService.atualizar(id, request)
+        );
+    }
 
+    @PatchMapping("/{id}/solicitar")
+    public ResponseEntity<Void> solicitar(
+        @PathVariable Integer id,
+        @Valid @RequestBody AcaoStatusViagemRequest request
+    ) {
+        viagemService.solicitar(id, request);
         return ResponseEntity.noContent().build();
     }
+
+    @PatchMapping("/{id}/cancelar")
+    public ResponseEntity<Void> cancelar(
+        @PathVariable Integer id,
+        @Valid @RequestBody AcaoStatusViagemRequest request
+    ) {
+        viagemService.cancelar(id, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/solicitar-ajustes")
+    public ResponseEntity<Void> solicitarAjustes(
+        @PathVariable Integer id,
+        @Valid @RequestBody AcaoStatusViagemRequest request
+    ) {
+        viagemService.solicitarAjustes(id, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/aprovar")
+    public ResponseEntity<Void> aprovar(
+        @PathVariable Integer id,
+        @Valid @RequestBody AcaoStatusViagemRequest request
+    ) {
+        viagemService.aprovar(id, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/rejeitar")
+    public ResponseEntity<Void> rejeitar(
+        @PathVariable Integer id,
+        @Valid @RequestBody AcaoStatusViagemRequest request
+    ) {
+        viagemService.rejeitar(id, request);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/{id}/historico")
-public ResponseEntity<List<HistoricoStatusResponse>> listarHistorico(
-    @PathVariable Integer id
-) {
-    return ResponseEntity.ok(
-        viagemService.listarHistorico(id)
-    );
-}
+    public ResponseEntity<List<HistoricoStatusResponse>> listarHistorico(
+        @PathVariable Integer id
+    ) {
+        return ResponseEntity.ok(
+            viagemService.listarHistorico(id)
+        );
+    }
 }
