@@ -1,5 +1,5 @@
 const API_BASE_URL = (
-    import.meta.env.VITE_API_URL || "http://localhost:8080/api"
+    import.meta.env.VITE_API_URL || "/api"
 ).replace(/\/$/, "");
 
 export class ApiError extends Error {
@@ -38,7 +38,10 @@ function mensagemDoErro(body, status) {
 
 export async function request(path, options = {}) {
     const { params, headers = {}, ...fetchOptions } = options;
-    const url = new URL(`${API_BASE_URL}${path}`);
+    const url = new URL(
+    `${API_BASE_URL}${path}`,
+    window.location.origin
+);
 
     if (params) {
         Object.entries(params).forEach(([chave, valor]) => {
