@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
-import Navbar from "../components/Navbar";
+import NavbarGestao from "../components/NavbarGestao.jsx";
 
 import {
     viagensRascunho,
@@ -293,7 +293,7 @@ function Dashboard() {
 
         <div className="app">
 
-            <Navbar />
+            <NavbarGestao />
 
             <div className="main-area">
 

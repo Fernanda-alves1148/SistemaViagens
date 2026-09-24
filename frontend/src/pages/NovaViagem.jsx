@@ -6,6 +6,8 @@ import Navbar from "../components/Navbar";
 
 import "../styles/viagens.css";
 
+
+
 function NovaViagem() {
     const navigate = useNavigate();
     const location = useLocation();
