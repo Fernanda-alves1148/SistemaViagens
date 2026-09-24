@@ -1,72 +1,47 @@
-const API_URL = "http://localhost:8080/api";
+import api from "./api";
 
-export async function buscarViagens() {
-
-    const response = await fetch(
-        `${API_URL}/viagens`
-    );
-
-    if (!response.ok) {
-        throw new Error(
-            "Erro ao buscar viagens."
-        );
-    }
-
-    return response.json();
+export function listarViagens(filtros = {}) {
+    return api.get("/viagens", filtros);
 }
 
-export async function buscarViagemPorId(id) {
-
-    const response = await fetch(
-        `${API_URL}/viagens/${id}`
-    );
-
-    if (!response.ok) {
-        throw new Error(
-            "Erro ao buscar viagem."
-        );
-    }
-
-    return response.json();
+export function buscarViagemPorId(id) {
+    return api.get(`/viagens/${id}`);
 }
 
-export async function criarViagem(viagem) {
-
-    const response = await fetch(
-        `${API_URL}/viagens`,
-        {
-            method: "POST",
-
-            headers: {
-                "Content-Type":
-                    "application/json"
-            },
-
-            body: JSON.stringify(viagem)
-        }
-    );
-
-    if (!response.ok) {
-        throw new Error(
-            "Erro ao criar viagem."
-        );
-    }
-
-    return response.json();
+export function criarViagem(dados) {
+    return api.post("/viagens", dados);
 }
 
-export async function excluirViagem(id) {
+export function atualizarViagem(id, dados) {
+    return api.put(`/viagens/${id}`, dados);
+}
 
-    const response = await fetch(
-        `${API_URL}/viagens/${id}`,
-        {
-            method: "DELETE"
-        }
-    );
+export function solicitarViagem(id, dados = {}) {
+    return api.patch(`/viagens/${id}/solicitar`, dados);
+}
 
-    if (!response.ok) {
-        throw new Error(
-            "Erro ao excluir viagem."
-        );
-    }
+export function cancelarViagem(id, dados = {}) {
+    return api.patch(`/viagens/${id}/cancelar`, dados);
+}
+
+export function solicitarAjustesViagem(id, dados = {}) {
+    return api.patch(`/viagens/${id}/solicitar-ajustes`, dados);
+}
+
+export function aprovarViagem(id, dados = {}) {
+    return api.patch(`/viagens/${id}/aprovar`, dados);
+}
+
+export function rejeitarViagem(id, dados) {
+    return api.patch(`/viagens/${id}/rejeitar`, dados);
+}
+
+export function listarHistoricoViagem(id) {
+    return api.get(`/viagens/${id}/historico`);
+}
+
+// O Controller.txt não possui DELETE /api/viagens/{id}.
+// Esta função fica preparada para quando esse endpoint for criado no back end.
+export function excluirViagem(id) {
+    return api.delete(`/viagens/${id}`);
 }
