@@ -1,15 +1,22 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import {
+    useEffect,
+    useState
+} from "react";
+
+import {
+    useNavigate,
+    useParams
+} from "react-router-dom";
 
 import Header from "../components/Header.jsx";
 import Navbar from "../components/Navbar";
 
 import {
-    viagensSolicitadas,
-    viagensRascunho
-} from "../data/viagensMock";
+    buscarViagemPorId
+} from "../services/viagemService";
 
 import "../styles/gestao.css";
+
 
 function formatarData(data) {
 
@@ -23,6 +30,7 @@ function formatarData(data) {
     return `${dia}/${mes}/${ano}`;
 }
 
+
 function formatarDataHora(data) {
 
     if (!data) {
@@ -31,6 +39,7 @@ function formatarDataHora(data) {
 
     return data;
 }
+
 
 function obterTextoStatus(status) {
 
@@ -55,9 +64,10 @@ function obterTextoStatus(status) {
             return "Cancelada";
 
         default:
-            return status;
+            return status || "Não informado";
     }
 }
+
 
 function obterClasseStatus(status) {
 
@@ -86,6 +96,7 @@ function obterClasseStatus(status) {
     }
 }
 
+
 function DetalhesGestaoViagem() {
 
     const { id } =
@@ -94,6 +105,32 @@ function DetalhesGestaoViagem() {
     const navigate =
         useNavigate();
 
+
+    /*
+     * Viagem recebida do backend.
+     */
+    const [viagem, setViagem] =
+        useState(null);
+
+
+    /*
+     * Controla a tela de carregamento.
+     */
+    const [carregando, setCarregando] =
+        useState(true);
+
+
+    /*
+     * Guarda possíveis erros da requisição.
+     */
+    const [erro, setErro] =
+        useState("");
+
+
+    /*
+     * Estados relacionados à decisão
+     * do gestor.
+     */
     const [acao, setAcao] =
         useState(null);
 
@@ -103,18 +140,90 @@ function DetalhesGestaoViagem() {
     const [mensagem, setMensagem] =
         useState("");
 
-    /*
-     * Procuramos a viagem nos dados mockados.
-     */
-    const viagem =
-        [
-            ...viagensRascunho,
-            ...viagensSolicitadas
-        ].find(
-            (item) =>
-                item.id === Number(id)
-        );
 
+    /*
+     * Busca a viagem real no backend.
+     *
+     * GET /api/viagens/{id}
+     */
+    useEffect(() => {
+
+        async function carregarViagem() {
+
+            try {
+
+                setCarregando(true);
+
+                setErro("");
+
+                const dados =
+                    await buscarViagemPorId(id);
+
+                setViagem(dados);
+
+            } catch (error) {
+
+                console.error(
+                    "Erro ao buscar viagem:",
+                    error
+                );
+
+                setErro(
+                    "Não foi possível carregar a viagem."
+                );
+
+            } finally {
+
+                setCarregando(false);
+
+            }
+        }
+
+        carregarViagem();
+
+    }, [id]);
+
+
+    /*
+     * Enquanto o backend responde,
+     * mostramos uma mensagem de carregamento.
+     */
+    if (carregando) {
+
+        return (
+
+            <div className="app">
+
+                <Navbar />
+
+                <div className="main-area">
+
+                    <Header />
+
+                    <main className="content">
+
+                        <div className="empty-state">
+
+                            <p>
+                                Carregando viagem...
+                            </p>
+
+                        </div>
+
+                    </main>
+
+                </div>
+
+            </div>
+        );
+    }
+
+
+    /*
+     * Caso a requisição tenha falhado
+     * ou o backend não tenha encontrado
+     * a viagem.
+     */
     if (!viagem) {
 
         return (
@@ -132,8 +241,14 @@ function DetalhesGestaoViagem() {
                         <div className="empty-state">
 
                             <h2>
-                                Viagem não encontrada
+                                {erro ||
+                                    "Viagem não encontrada"}
                             </h2>
+
+                            <p>
+                                A viagem solicitada
+                                não foi localizada.
+                            </p>
 
                             <button
                                 type="button"
@@ -157,15 +272,30 @@ function DetalhesGestaoViagem() {
         );
     }
 
+
     /*
-     * Somente viagens solicitadas podem
-     * receber uma decisão do gestor.
+     * Somente viagens solicitadas
+     * podem receber uma decisão
+     * do gestor.
      */
     const podeDecidir =
         viagem.status === "SOLICITADA";
 
-    const historico =
-        viagem.historico || [];
+
+    /*
+     * IMPORTANTE:
+     *
+     * O ViagemResponse NÃO possui histórico.
+     *
+     * O histórico será buscado posteriormente
+     * pelo endpoint:
+     *
+     * GET /api/viagens/{id}/historico
+     *
+     * Por enquanto deixamos vazio.
+     */
+    const historico = [];
+
 
     function iniciarAcao(tipo) {
 
@@ -176,6 +306,7 @@ function DetalhesGestaoViagem() {
         setAcao(tipo);
     }
 
+
     function cancelarAcao() {
 
         setAcao(null);
@@ -185,6 +316,20 @@ function DetalhesGestaoViagem() {
         setMensagem("");
     }
 
+
+    /*
+     * POR ENQUANTO:
+     *
+     * Esta função ainda não envia a decisão
+     * para o backend.
+     *
+     * O backend exige:
+     *
+     * idUsuarioResponsavel
+     *
+     * Ainda precisamos descobrir de onde
+     * o frontend obtém o ID do gestor logado.
+     */
     function confirmarAcao() {
 
         if (
@@ -204,22 +349,23 @@ function DetalhesGestaoViagem() {
             }
         }
 
+
         if (acao === "aprovar") {
 
             setMensagem(
-                "Viagem aprovada com sucesso."
+                "A aprovação será conectada ao backend na próxima etapa."
             );
 
         } else if (acao === "rejeitar") {
 
             setMensagem(
-                "Viagem rejeitada com sucesso."
+                "A rejeição será conectada ao backend na próxima etapa."
             );
 
         } else if (acao === "ajustes") {
 
             setMensagem(
-                "Viagem devolvida para ajustes."
+                "A solicitação de ajustes será conectada ao backend na próxima etapa."
             );
         }
 
@@ -227,6 +373,7 @@ function DetalhesGestaoViagem() {
 
         setObservacao("");
     }
+
 
     return (
 
@@ -239,6 +386,7 @@ function DetalhesGestaoViagem() {
                 <Header />
 
                 <main className="content">
+
 
                     {/* ===============================
                         VOLTAR
@@ -344,6 +492,7 @@ function DetalhesGestaoViagem() {
 
                         <div className="info-grid-viagem">
 
+
                             <div className="info-item-viagem">
 
                                 <span>
@@ -352,7 +501,7 @@ function DetalhesGestaoViagem() {
 
                                 <strong>
                                     {
-                                        viagem.responsavel ||
+                                        viagem.solicitante ||
                                         "Não informado"
                                     }
                                 </strong>
@@ -367,10 +516,7 @@ function DetalhesGestaoViagem() {
                                 </span>
 
                                 <strong>
-                                    {
-                                        viagem.matricula ||
-                                        "Não informada"
-                                    }
+                                    Não informada
                                 </strong>
 
                             </div>
@@ -384,7 +530,7 @@ function DetalhesGestaoViagem() {
 
                                 <strong>
                                     {
-                                        viagem.cargoSolicitacao ||
+                                        viagem.cargoNoMomento ||
                                         "Não informado"
                                     }
                                 </strong>
@@ -400,7 +546,7 @@ function DetalhesGestaoViagem() {
 
                                 <strong>
                                     {
-                                        viagem.areaSolicitacao ||
+                                        viagem.areaNoMomento ||
                                         "Não informada"
                                     }
                                 </strong>
@@ -418,7 +564,9 @@ function DetalhesGestaoViagem() {
 
                     <section className="detail-card">
 
+
                         <div className="route-highlight">
+
 
                             <div>
 
@@ -431,6 +579,9 @@ function DetalhesGestaoViagem() {
                                 </strong>
 
                                 <small>
+                                    {viagem.ufOrigem
+                                        ? `${viagem.ufOrigem} • `
+                                        : ""}
                                     {formatarData(
                                         viagem.dataInicio
                                     )}
@@ -455,6 +606,9 @@ function DetalhesGestaoViagem() {
                                 </strong>
 
                                 <small>
+                                    {viagem.ufDestino
+                                        ? `${viagem.ufDestino} • `
+                                        : ""}
                                     {formatarData(
                                         viagem.dataFim
                                     )}
@@ -467,6 +621,7 @@ function DetalhesGestaoViagem() {
 
                         <div className="info-grid-viagem">
 
+
                             <div className="info-item-viagem">
 
                                 <span>
@@ -474,13 +629,17 @@ function DetalhesGestaoViagem() {
                                 </span>
 
                                 <strong>
+
                                     {formatarData(
                                         viagem.dataInicio
                                     )}
+
                                     {" – "}
+
                                     {formatarData(
                                         viagem.dataFim
                                     )}
+
                                 </strong>
 
                             </div>
@@ -493,12 +652,14 @@ function DetalhesGestaoViagem() {
                                 </span>
 
                                 <strong>
+
                                     {
-                                        viagem.transportes?.join(
+                                        viagem.meiosTransporte?.join(
                                             ", "
                                         ) ||
                                         "Não informado"
                                     }
+
                                 </strong>
 
                             </div>
@@ -541,6 +702,25 @@ function DetalhesGestaoViagem() {
                             </p>
 
                         </div>
+
+
+                        {viagem.justificativa && (
+
+                            <div className="motivo">
+
+                                <span>
+                                    JUSTIFICATIVA
+                                </span>
+
+                                <p>
+                                    {
+                                        viagem.justificativa
+                                    }
+                                </p>
+
+                            </div>
+
+                        )}
 
                     </section>
 
@@ -612,9 +792,11 @@ function DetalhesGestaoViagem() {
                                                     </strong>
 
                                                     <span>
-                                                        {formatarDataHora(
-                                                            item.data
-                                                        )}
+                                                        {
+                                                            formatarDataHora(
+                                                                item.data
+                                                            )
+                                                        }
                                                     </span>
 
                                                     <p>
@@ -670,6 +852,7 @@ function DetalhesGestaoViagem() {
 
                             <div className="decisoes">
 
+
                                 <button
                                     type="button"
                                     className="botao-cancelar"
@@ -722,6 +905,7 @@ function DetalhesGestaoViagem() {
                     {acao && (
 
                         <section className="detail-card">
+
 
                             <div className="form-section-title">
 
@@ -808,6 +992,7 @@ function DetalhesGestaoViagem() {
 
                             <div className="form-acoes">
 
+
                                 <button
                                     type="button"
                                     className="botao-secundario"
@@ -831,11 +1016,13 @@ function DetalhesGestaoViagem() {
                                         confirmarAcao
                                     }
                                 >
+
                                     {acao === "rejeitar"
                                         ? "Confirmar rejeição"
                                         : acao === "ajustes"
                                             ? "Enviar para ajustes"
                                             : "Confirmar aprovação"}
+
                                 </button>
 
                             </div>
@@ -874,5 +1061,6 @@ function DetalhesGestaoViagem() {
         </div>
     );
 }
+
 
 export default DetalhesGestaoViagem;

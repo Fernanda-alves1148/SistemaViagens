@@ -11,6 +11,8 @@ import ViagensSolicitadas from "./pages/ViagensSolicitadas";
 import GestaoViagens from "./pages/GestaoViagens";
 import DespesasViagem from "./pages/DespesasViagem";
 import DetalhesGestaoViagem from "./pages/DetalhesGestaoViagem";
+import Dashboard from "./pages/Dashboard";
+
 
 function App() {
 

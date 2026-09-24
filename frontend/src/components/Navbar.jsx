@@ -21,23 +21,35 @@ return ( <aside className="sidebar">
                 PRINCIPAL
             </div>
 
-            <NavLink
-                to="/"
-                className={({ isActive }) =>
-                    `menu-item ${isActive ? "active" : ""}`
-                }
-            >
-                <span className="menu-icon">▣</span>
-                <span>Minhas viagens</span>
-            </NavLink>
+           <NavLink
+    to="/"
+    className={({ isActive }) =>
+        `menu-item ${isActive ? "active" : ""}`
+    }
+>
+    <span className="menu-icon">▣</span>
+    <span>Minhas viagens</span>
+</NavLink>
 
-            <NavLink
-                to="/nova-viagem"
-                className="menu-item"
-            >
-                <span className="menu-icon">+</span>
-                <span>Nova viagem</span>
-            </NavLink>
+<NavLink
+    to="/dashboard"
+    className={({ isActive }) =>
+        `menu-item ${isActive ? "active" : ""}`
+    }
+>
+    <span className="menu-icon">▤</span>
+    <span>Dashboard</span>
+</NavLink>
+
+<NavLink
+    to="/nova-viagem"
+    className={({ isActive }) =>
+        `menu-item ${isActive ? "active" : ""}`
+    }
+>
+    <span className="menu-icon">+</span>
+    <span>Nova viagem</span>
+</NavLink>
 
             <NavLink
                 to="/viagens-solicitadas"
