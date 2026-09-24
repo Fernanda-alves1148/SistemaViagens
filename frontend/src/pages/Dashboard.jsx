@@ -9,7 +9,7 @@ import {
     viagensSolicitadas
 } from "../data/viagensMock";
 
-import "../styles/dashboard.css";
+import "../styles/Dashboard.css";
 
 function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString(
