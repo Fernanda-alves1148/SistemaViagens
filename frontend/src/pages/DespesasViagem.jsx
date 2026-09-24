@@ -1,12 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
 import Navbar from "../components/Navbar";
 
-import {
-    viagensSolicitadas
-} from "../data/viagensMock";
+import { buscarViagemPorId } from "../services/viagemService";
 
 import "../styles/viagens.css";
 
@@ -26,17 +24,27 @@ function obterHoje() {
         .split("T")[0];
 }
 
+function formatarData(data) {
+    if (!data) return "-";
+
+    const [ano, mes, dia] = data.split("-");
+
+    return `${dia}/${mes}/${ano}`;
+}
+
 function DespesasViagem() {
 
     const { id } = useParams();
 
     const navigate = useNavigate();
 
-    const viagem =
-        viagensSolicitadas.find(
-            (item) =>
-                item.id === Number(id)
-        );
+    const [viagem, setViagem] = useState(null);
+
+    const [carregando, setCarregando] =
+        useState(true);
+
+    const [erro, setErro] =
+        useState("");
 
     const [data, setData] =
         useState(obterHoje());
@@ -50,12 +58,91 @@ function DespesasViagem() {
     const [valor, setValor] =
         useState("");
 
+    /*
+     * As despesas ainda não possuem endpoint
+     * no backend atual.
+     *
+     * Por enquanto, elas ficam somente
+     * em memória enquanto a tela estiver aberta.
+     */
     const [despesas, setDespesas] =
-        useState(
-            viagem?.despesas || []
-        );
+        useState([]);
 
-    if (!viagem) {
+    useEffect(() => {
+
+        async function carregarViagem() {
+
+            try {
+
+                setCarregando(true);
+                setErro("");
+
+                const resposta =
+                    await buscarViagemPorId(id);
+
+                setViagem(resposta);
+
+            } catch (error) {
+
+                console.error(
+                    "Erro ao carregar viagem:",
+                    error
+                );
+
+                setErro(
+                    error.message ||
+                    "Não foi possível carregar a viagem."
+                );
+
+                setViagem(null);
+
+            } finally {
+
+                setCarregando(false);
+
+            }
+        }
+
+        carregarViagem();
+
+    }, [id]);
+
+
+    if (carregando) {
+
+        return (
+            <div className="app">
+
+                <Navbar />
+
+                <div className="main-area">
+
+                    <Header />
+
+                    <main className="content">
+
+                        <div className="empty-state">
+
+                            <h2>
+                                Carregando viagem...
+                            </h2>
+
+                            <p>
+                                Aguarde enquanto buscamos os dados da viagem.
+                            </p>
+
+                        </div>
+
+                    </main>
+
+                </div>
+
+            </div>
+        );
+    }
+
+
+    if (erro || !viagem) {
 
         return (
             <div className="app">
@@ -74,6 +161,11 @@ function DespesasViagem() {
                                 Viagem não encontrada
                             </h2>
 
+                            <p>
+                                {erro ||
+                                    "Não foi possível encontrar a viagem informada."}
+                            </p>
+
                             <button
                                 type="button"
                                 className="botao-destaque"
@@ -89,11 +181,17 @@ function DespesasViagem() {
                     </main>
 
                 </div>
+
             </div>
         );
     }
 
-    if (viagem.status !== "ACEITA") {
+
+    /*
+     * O backend utiliza APROVADA.
+     * O código antigo utilizava ACEITA.
+     */
+    if (viagem.status !== "APROVADA") {
 
         return (
             <div className="app">
@@ -140,6 +238,7 @@ function DespesasViagem() {
         );
     }
 
+
     const total =
         despesas.reduce(
             (soma, despesa) =>
@@ -150,35 +249,48 @@ function DespesasViagem() {
             0
         );
 
+
     function registrarDespesa() {
 
         if (!data) {
+
             alert(
                 "Informe a data da despesa."
             );
+
             return;
         }
 
+
         if (data > obterHoje()) {
+
             alert(
                 "A data da despesa não pode ser futura."
             );
+
             return;
         }
 
+
         if (!tipo) {
+
             alert(
                 "Selecione o tipo da despesa."
             );
+
             return;
         }
 
+
         if (!descricao.trim()) {
+
             alert(
                 "Informe uma descrição."
             );
+
             return;
         }
+
 
         const valorNumerico =
             Number(
@@ -186,35 +298,54 @@ function DespesasViagem() {
                     .replace(",", ".")
             );
 
+
         if (
             Number.isNaN(valorNumerico) ||
             valorNumerico <= 0
         ) {
+
             alert(
                 "O valor deve ser maior que zero."
             );
+
             return;
         }
 
+
         const novaDespesa = {
+
             id:
                 Date.now(),
+
             data,
+
             tipo,
+
             descricao,
-            valor: valorNumerico
+
+            valor:
+                valorNumerico
+
         };
+
 
         setDespesas([
             ...despesas,
             novaDespesa
         ]);
 
-        setData(obterHoje());
+
+        setData(
+            obterHoje()
+        );
+
         setTipo("");
+
         setDescricao("");
+
         setValor("");
     }
+
 
     function excluirDespesa(idDespesa) {
 
@@ -225,6 +356,7 @@ function DespesasViagem() {
             )
         );
     }
+
 
     return (
 
@@ -269,8 +401,14 @@ function DespesasViagem() {
 
                             <p>
                                 {viagem.origem}
+                                {viagem.ufOrigem
+                                    ? ` - ${viagem.ufOrigem}`
+                                    : ""}
                                 {" → "}
                                 {viagem.destino}
+                                {viagem.ufDestino
+                                    ? ` - ${viagem.ufDestino}`
+                                    : ""}
                             </p>
 
                         </div>
@@ -332,6 +470,7 @@ function DespesasViagem() {
                                         )
                                     }
                                 >
+
                                     <option value="">
                                         Selecione
                                     </option>
@@ -359,6 +498,7 @@ function DespesasViagem() {
                                     <option value="Outras">
                                         Outras despesas
                                     </option>
+
                                 </select>
 
                             </div>
@@ -482,14 +622,31 @@ function DespesasViagem() {
                                         <thead>
 
                                             <tr>
-                                                <th>Data</th>
-                                                <th>Tipo</th>
-                                                <th>Descrição</th>
-                                                <th>Valor</th>
-                                                <th>Ação</th>
+
+                                                <th>
+                                                    Data
+                                                </th>
+
+                                                <th>
+                                                    Tipo
+                                                </th>
+
+                                                <th>
+                                                    Descrição
+                                                </th>
+
+                                                <th>
+                                                    Valor
+                                                </th>
+
+                                                <th>
+                                                    Ação
+                                                </th>
+
                                             </tr>
 
                                         </thead>
+
 
                                         <tbody>
 
@@ -503,7 +660,9 @@ function DespesasViagem() {
                                                     >
 
                                                         <td>
-                                                            {despesa.data}
+                                                            {formatarData(
+                                                                despesa.data
+                                                            )}
                                                         </td>
 
                                                         <td>

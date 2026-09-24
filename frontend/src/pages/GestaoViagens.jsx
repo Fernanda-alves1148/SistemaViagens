@@ -1,13 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
 import NavbarGestao from "../components/NavbarGestao";
 
-import {
-    viagensSolicitadas,
-    viagensRascunho
-} from "../data/viagensMock";
+import { listarViagens } from "../services/viagemService";
 
 import "../styles/gestao.css";
 
@@ -42,7 +39,7 @@ function obterTextoStatus(status) {
             return "Cancelada";
 
         default:
-            return status;
+            return status || "-";
     }
 }
 
@@ -74,6 +71,12 @@ function obterClasseStatus(status) {
 function GestaoViagens() {
     const navigate = useNavigate();
 
+    const [viagens, setViagens] = useState([]);
+
+    const [carregando, setCarregando] = useState(true);
+
+    const [erro, setErro] = useState("");
+
     const [filtroStatus, setFiltroStatus] =
         useState("TODAS");
 
@@ -86,30 +89,51 @@ function GestaoViagens() {
     const [dataFimBusca, setDataFimBusca] =
         useState("");
 
+
     /*
-     * Enquanto o frontend não estiver conectado
-     * ao backend, utilizamos os dados mockados.
+     * ==========================================
+     * CARREGAR VIAGENS DO BACKEND
+     * ==========================================
      */
-    const todasAsViagens = [
-        ...viagensRascunho,
-        ...viagensSolicitadas
-    ];
 
-    const viagens = todasAsViagens.map(
-        (viagem) => ({
-            ...viagem,
+    useEffect(() => {
+        async function carregarViagens() {
+            try {
+                setCarregando(true);
+                setErro("");
 
-            colaborador:
-                viagem.responsavel ||
-                "Não informado",
+                const resposta = await listarViagens();
 
-            transporte:
-                viagem.transportes?.join(
-                    ", "
-                ) ||
-                "Não informado"
-        })
-    );
+                setViagens(resposta || []);
+
+            } catch (error) {
+                console.error(
+                    "Erro ao carregar viagens:",
+                    error
+                );
+
+                setErro(
+                    error.message ||
+                    "Não foi possível carregar as viagens."
+                );
+
+                setViagens([]);
+
+            } finally {
+                setCarregando(false);
+            }
+        }
+
+        carregarViagens();
+
+    }, []);
+
+
+    /*
+     * ==========================================
+     * INDICADORES
+     * ==========================================
+     */
 
     const quantidadeTotal =
         viagens.length;
@@ -135,6 +159,13 @@ function GestaoViagens() {
                 "REJEITADA"
         ).length;
 
+
+    /*
+     * ==========================================
+     * FILTROS
+     * ==========================================
+     */
+
     const viagensFiltradas =
         viagens.filter(
             (viagem) => {
@@ -144,9 +175,14 @@ function GestaoViagens() {
                     viagem.status ===
                         filtroStatus;
 
+
+                const destino =
+                    viagem.destino || "";
+
+
                 const correspondeDestino =
                     destinoBusca.trim() === "" ||
-                    viagem.destino
+                    destino
                         .toLowerCase()
                         .includes(
                             destinoBusca
@@ -154,15 +190,24 @@ function GestaoViagens() {
                                 .toLowerCase()
                         );
 
+
                 const correspondeDataInicio =
                     dataInicioBusca === "" ||
-                    viagem.dataInicio >=
-                        dataInicioBusca;
+                    (
+                        viagem.dataInicio &&
+                        viagem.dataInicio >=
+                            dataInicioBusca
+                    );
+
 
                 const correspondeDataFim =
                     dataFimBusca === "" ||
-                    viagem.dataFim <=
-                        dataFimBusca;
+                    (
+                        viagem.dataFim &&
+                        viagem.dataFim <=
+                            dataFimBusca
+                    );
+
 
                 return (
                     correspondeStatus &&
@@ -173,12 +218,118 @@ function GestaoViagens() {
             }
         );
 
+
+    /*
+     * ==========================================
+     * LIMPAR FILTROS
+     * ==========================================
+     */
+
     function limparFiltros() {
         setFiltroStatus("TODAS");
         setDestinoBusca("");
         setDataInicioBusca("");
         setDataFimBusca("");
     }
+
+
+    /*
+     * ==========================================
+     * TELA DE CARREGAMENTO
+     * ==========================================
+     */
+
+    if (carregando) {
+        return (
+            <div className="app">
+
+                <NavbarGestao />
+
+                <div className="main-area">
+
+                    <Header />
+
+                    <main className="content">
+
+                        <section className="section">
+
+                            <div className="empty-state">
+
+                                <h3>
+                                    Carregando viagens...
+                                </h3>
+
+                                <p>
+                                    Aguarde enquanto buscamos
+                                    as viagens no sistema.
+                                </p>
+
+                            </div>
+
+                        </section>
+
+                    </main>
+
+                </div>
+
+            </div>
+        );
+    }
+
+
+    /*
+     * ==========================================
+     * ERRO AO CARREGAR
+     * ==========================================
+     */
+
+    if (erro) {
+        return (
+            <div className="app">
+
+                <NavbarGestao />
+
+                <div className="main-area">
+
+                    <Header />
+
+                    <main className="content">
+
+                        <section className="section">
+
+                            <div className="empty-state">
+
+                                <h3>
+                                    Não foi possível carregar
+                                    as viagens
+                                </h3>
+
+                                <p>
+                                    {erro}
+                                </p>
+
+                                <button
+                                    type="button"
+                                    className="botao-secundario"
+                                    onClick={() =>
+                                        window.location.reload()
+                                    }
+                                >
+                                    Tentar novamente
+                                </button>
+
+                            </div>
+
+                        </section>
+
+                    </main>
+
+                </div>
+
+            </div>
+        );
+    }
+
 
     return (
         <div className="app">
@@ -582,129 +733,143 @@ function GestaoViagens() {
                                     <tbody>
 
                                         {viagensFiltradas.map(
-                                            (viagem) => (
+                                            (viagem) => {
 
-                                                <tr
-                                                    key={
-                                                        viagem.id
-                                                    }
-                                                >
+                                                const transporte =
+                                                    viagem.meiosTransporte
+                                                        ?.join(", ") ||
+                                                    "Não informado";
 
-                                                    <td>
-
-                                                        #
-                                                        {String(
+                                                return (
+                                                    <tr
+                                                        key={
                                                             viagem.id
-                                                        ).padStart(
-                                                            3,
-                                                            "0"
-                                                        )}
+                                                        }
+                                                    >
 
-                                                    </td>
+                                                        <td>
 
+                                                            #
+                                                            {String(
+                                                                viagem.id
+                                                            ).padStart(
+                                                                3,
+                                                                "0"
+                                                            )}
 
-                                                    <td>
-
-                                                        <strong>
-                                                            {
-                                                                viagem.colaborador
-                                                            }
-                                                        </strong>
-
-                                                        <span className="texto-suave">
-                                                            {
-                                                                viagem.matricula
-                                                            }
-                                                        </span>
-
-                                                    </td>
+                                                        </td>
 
 
-                                                    <td>
-
-                                                        <div className="celula-rota">
+                                                        <td>
 
                                                             <strong>
                                                                 {
-                                                                    viagem.destino
+                                                                    viagem.solicitante ||
+                                                                    "Não informado"
                                                                 }
                                                             </strong>
 
-                                                            <span>
-                                                                de{" "}
+                                                            <span className="texto-suave">
                                                                 {
-                                                                    viagem.origem
+                                                                    viagem.areaNoMomento ||
+                                                                    "Área não informada"
                                                                 }
                                                             </span>
 
-                                                        </div>
-
-                                                    </td>
+                                                        </td>
 
 
-                                                    <td>
+                                                        <td>
 
-                                                        <strong>
-                                                            {formatarData(
-                                                                viagem.dataInicio
-                                                            )}
-                                                        </strong>
+                                                            <div className="celula-rota">
 
-                                                        <span className="data-fim">
-                                                            até{" "}
-                                                            {formatarData(
-                                                                viagem.dataFim
-                                                            )}
-                                                        </span>
+                                                                <strong>
+                                                                    {
+                                                                        viagem.destino
+                                                                    }
+                                                                    {viagem.ufDestino
+                                                                        ? ` - ${viagem.ufDestino}`
+                                                                        : ""}
+                                                                </strong>
 
-                                                    </td>
+                                                                <span>
+                                                                    de{" "}
+                                                                    {
+                                                                        viagem.origem
+                                                                    }
+                                                                    {viagem.ufOrigem
+                                                                        ? ` - ${viagem.ufOrigem}`
+                                                                        : ""}
+                                                                </span>
+
+                                                            </div>
+
+                                                        </td>
 
 
-                                                    <td>
-                                                        {
-                                                            viagem.transporte
-                                                        }
-                                                    </td>
+                                                        <td>
+
+                                                            <strong>
+                                                                {formatarData(
+                                                                    viagem.dataInicio
+                                                                )}
+                                                            </strong>
+
+                                                            <span className="data-fim">
+                                                                até{" "}
+                                                                {formatarData(
+                                                                    viagem.dataFim
+                                                                )}
+                                                            </span>
+
+                                                        </td>
 
 
-                                                    <td>
-
-                                                        <span
-                                                            className={
-                                                                obterClasseStatus(
-                                                                    viagem.status
-                                                                )
-                                                            }
-                                                        >
+                                                        <td>
                                                             {
-                                                                obterTextoStatus(
-                                                                    viagem.status
-                                                                )
+                                                                transporte
                                                             }
-                                                        </span>
-
-                                                    </td>
+                                                        </td>
 
 
-                                                    <td>
+                                                        <td>
 
-                                                        <button
-                                                            type="button"
-                                                            className="botao-visualizar"
-                                                            onClick={() =>
-                                                                navigate(
-                                                                    `/gestao/viagem/${viagem.id}`
-                                                                )
-                                                            }
-                                                        >
-                                                            Visualizar
-                                                        </button>
+                                                            <span
+                                                                className={
+                                                                    obterClasseStatus(
+                                                                        viagem.status
+                                                                    )
+                                                                }
+                                                            >
+                                                                {
+                                                                    obterTextoStatus(
+                                                                        viagem.status
+                                                                    )
+                                                                }
+                                                            </span>
 
-                                                    </td>
+                                                        </td>
 
-                                                </tr>
 
-                                            )
+                                                        <td>
+
+                                                            <button
+                                                                type="button"
+                                                                className="botao-visualizar"
+                                                                onClick={() =>
+                                                                    navigate(
+                                                                        `/gestao/viagem/${viagem.id}`
+                                                                    )
+                                                                }
+                                                            >
+                                                                Visualizar
+                                                            </button>
+
+                                                        </td>
+
+                                                    </tr>
+                                                );
+                                            }
                                         )}
 
                                     </tbody>
