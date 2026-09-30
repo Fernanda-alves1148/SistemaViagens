@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
-import NavbarGestao from "../components/NavbarGestao.jsx";
+import Navbar from "../components/Navbar";
 
 import { listarViagens } from "../services/viagemService";
 
@@ -328,7 +328,7 @@ function Dashboard() {
 
             <div className="app">
 
-                <NavbarGestao />
+                <Navbar />
 
                 <div className="main-area">
 
@@ -369,7 +369,7 @@ function Dashboard() {
 
             <div className="app">
 
-                <NavbarGestao />
+                <Navbar />
 
                 <div className="main-area">
 
@@ -417,7 +417,7 @@ function Dashboard() {
 
         <div className="app">
 
-            <NavbarGestao />
+            <Navbar />
 
             <div className="main-area">
 

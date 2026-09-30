@@ -61,6 +61,16 @@ return ( <aside className="sidebar">
                 <span>Solicitações</span>
             </NavLink>
 
+<NavLink
+    to="/gestao"
+    className={({ isActive }) =>
+        `menu-item ${isActive ? "active" : ""}`
+    }
+>
+    <span className="menu-icon">✓</span>
+    <span>Gestão de viagens</span>
+</NavLink>
+
             <div className="menu-separador" />
 
             <div className="menu-label">

@@ -31,6 +31,27 @@ function formatarData(data) {
     return `${dia}/${mes}/${ano}`;
 }
 
+function formatarDataHora(data) {
+
+    if (!data) {
+        return "Data não informada";
+    }
+
+    const dataConvertida =
+        new Date(data);
+
+    if (
+        Number.isNaN(
+            dataConvertida.getTime()
+        )
+    ) {
+        return data;
+    }
+
+    return dataConvertida.toLocaleString(
+        "pt-BR"
+    );
+}
 
 function formatarMoeda(valor) {
 
@@ -652,24 +673,27 @@ function DetalhesViagem() {
                                                 <div className="historico-conteudo">
 
                                                     <strong>
-                                                        {
-                                                            item.status
-                                                        }
-                                                    </strong>
+    {item.status}
+</strong>
 
-                                                    <span>
-                                                        {item.data
-                                                            ? formatarData(
-                                                                item.data
-                                                            )
-                                                            : "Data não informada"}
-                                                    </span>
+<span>
+    {formatarDataHora(
+        item.dataAlteracao
+    )}
+</span>
 
-                                                    <p>
-                                                        {
-                                                            item.descricao
-                                                        }
-                                                    </p>
+<p>
+    Responsável:{" "}
+    {item.nomeResponsavel ||
+        item.loginResponsavel ||
+        "Não informado"}
+</p>
+
+{item.observacao && (
+    <p>
+        {item.observacao}
+    </p>
+)}
 
                                                 </div>
 
