@@ -353,13 +353,17 @@ function DetalhesViagem() {
      * ==========================================
      */
 
-    const podeAlterar =
-        viagem.status !== "APROVADA";
+const statusNormalizado =
+    String(viagem.status || "")
+        .trim()
+        .toUpperCase();
 
+const podeAlterar =
+    statusNormalizado === "RASCUNHO" ||
+    statusNormalizado === "AJUSTES_SOLICITADOS";
 
-    const podeRegistrarDespesas =
-        viagem.status === "APROVADA";
-
+const podeRegistrarDespesas =
+    statusNormalizado === "APROVADA";
 
     return (
 
