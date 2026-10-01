@@ -16,6 +16,10 @@ import {
     listarHistoricoViagem
 } from "../services/viagemService";
 
+import {
+    buscarCustosViagem
+} from "../services/financeiroService.jsx";
+
 import "../styles/viagens.css";
 
 

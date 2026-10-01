@@ -16,9 +16,6 @@ import {
 
 import "../styles/viagens.css";
 
-import {
-    buscarCustosViagem
-} from "../services/financeiroService";
 
 function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString(
