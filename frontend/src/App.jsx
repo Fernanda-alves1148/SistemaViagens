@@ -1,9 +1,12 @@
 import {
     BrowserRouter,
-    Routes,
-    Route
+    Navigate,
+    Route,
+    Routes
 } from "react-router-dom";
 
+import RotaProtegida from "./components/RotaProtegida";
+import Login from "./pages/Login";
 import Rascunhos from "./pages/Rascunhos";
 import NovaViagem from "./pages/NovaViagem";
 import DetalhesViagem from "./pages/DetalhesViagem";
@@ -13,59 +16,97 @@ import DespesasViagem from "./pages/DespesasViagem";
 import DetalhesGestaoViagem from "./pages/DetalhesGestaoViagem";
 import Dashboard from "./pages/Dashboard";
 
-
 function App() {
-
     return (
         <BrowserRouter>
-
             <Routes>
+                <Route
+                    path="/login"
+                    element={<Login />}
+                />
 
                 <Route
                     path="/"
-                    element={<Rascunhos />}
+                    element={
+                        <RotaProtegida perfil="COLABORADOR">
+                            <Rascunhos />
+                        </RotaProtegida>
+                    }
                 />
 
                 <Route
                     path="/nova-viagem"
-                    element={<NovaViagem />}
+                    element={
+                        <RotaProtegida perfil="COLABORADOR">
+                            <NovaViagem />
+                        </RotaProtegida>
+                    }
                 />
 
                 <Route
                     path="/viagem/:id"
-                    element={<DetalhesViagem />}
+                    element={
+                        <RotaProtegida perfil="COLABORADOR">
+                            <DetalhesViagem />
+                        </RotaProtegida>
+                    }
                 />
 
                 <Route
                     path="/viagens-solicitadas"
-                    element={<ViagensSolicitadas />}
+                    element={
+                        <RotaProtegida perfil="COLABORADOR">
+                            <ViagensSolicitadas />
+                        </RotaProtegida>
+                    }
+                />
+
+                <Route
+                    path="/viagem/:id/despesas"
+                    element={
+                        <RotaProtegida perfil="COLABORADOR">
+                            <DespesasViagem />
+                        </RotaProtegida>
+                    }
                 />
 
                 <Route
                     path="/gestao"
-                    element={<GestaoViagens />}
-                />
-
-
-                <Route
-                    path="/viagem/:id/despesas"
-                    element={<DespesasViagem />}
-                />
-
-                <Route
-                path="/gestao/viagem/:id"
                     element={
-                        <DetalhesGestaoViagem />
-                             }
+                        <RotaProtegida perfil="GESTOR">
+                            <GestaoViagens />
+                        </RotaProtegida>
+                    }
                 />
 
-                 <Route
+                <Route
+                    path="/gestao/viagem/:id"
+                    element={
+                        <RotaProtegida perfil="GESTOR">
+                            <DetalhesGestaoViagem />
+                        </RotaProtegida>
+                    }
+                />
+
+                <Route
                     path="/dashboard"
-                    element={<Dashboard />}
+                    element={
+                        <RotaProtegida perfil="GESTOR">
+                            <Dashboard />
+                        </RotaProtegida>
+                    }
                 />
 
+                <Route
+                    path="*"
+                    element={
+                        <Navigate
+                            to="/login"
+                            replace
+                        />
+                    }
+                />
             </Routes>
-
         </BrowserRouter>
     );
 }
