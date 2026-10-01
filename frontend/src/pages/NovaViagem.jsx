@@ -345,8 +345,10 @@ function NovaViagem() {
     const [destinoId, setDestinoId] =
         useState("");
 
-    const [meioTransporteId, setMeioTransporteId] =
-        useState("");
+    const [
+    meiosTransporteIds,
+    setMeiosTransporteIds
+] = useState([]);
 
     const [motivoId, setMotivoId] =
         useState("");
@@ -525,41 +527,27 @@ function NovaViagem() {
                  * Aceitamos os dois formatos.
                  */
 
-                let nomeMeio =
-                    viagem.meioTransporte;
+                const nomesMeios =
+    Array.isArray(viagem.meiosTransporte)
+        ? viagem.meiosTransporte
+        : [viagem.meioTransporte]
+            .filter(Boolean);
 
+const idsEncontrados =
+    MEIOS_TRANSPORTE
+        .filter(meio =>
+            nomesMeios.some(nome =>
+                normalizarTexto(nome) ===
+                normalizarTexto(meio.nome)
+            )
+        )
+        .map(meio =>
+            String(meio.id)
+        );
 
-                if (
-                    Array.isArray(
-                        viagem.meiosTransporte
-                    )
-                ) {
-
-                    nomeMeio =
-                        viagem.meiosTransporte[0];
-                }
-
-
-                const meioEncontrado =
-                    MEIOS_TRANSPORTE.find(
-                        (meio) =>
-                            normalizarTexto(
-                                meio.nome
-                            ) ===
-                            normalizarTexto(
-                                nomeMeio
-                            )
-                    );
-
-
-                if (meioEncontrado) {
-
-                    setMeioTransporteId(
-                        String(
-                            meioEncontrado.id
-                        )
-                    );
-                }
+setMeiosTransporteIds(
+    idsEncontrados
+);
 
 
                 /*
@@ -701,15 +689,14 @@ function NovaViagem() {
         }
 
 
-        if (!meioTransporteId) {
+        if (meiosTransporteIds.length === 0) {
 
-            alert(
-                "Selecione um meio de transporte."
-            );
+    alert(
+        "Selecione pelo menos um meio de transporte."
+    );
 
-            return false;
-        }
-
+    return false;
+}
 
         if (!motivoId) {
 
@@ -796,9 +783,8 @@ function NovaViagem() {
             matriculaSolicitante:
                 matriculaSolicitante.trim(),
 
-           idsMeiosTransporte: [
-    Number(meioTransporteId)
-]
+           idsMeiosTransporte:
+    meiosTransporteIds.map(Number)
 
         };
     }
@@ -1389,7 +1375,7 @@ function NovaViagem() {
 
 
                                 <p>
-                                    Selecione o meio que será utilizado.
+                                    Selecione um ou mais meios que serão utilizados.
                                 </p>
 
                             </div>
@@ -1401,13 +1387,13 @@ function NovaViagem() {
                                 {MEIOS_TRANSPORTE.map(
                                     (transporte) => {
 
-                                        const selecionado =
-                                            String(
-                                                transporte.id
-                                            ) ===
-                                            String(
-                                                meioTransporteId
-                                            );
+                                        const idTransporte =
+    String(transporte.id);
+
+const selecionado =
+    meiosTransporteIds.includes(
+        idTransporte
+    );
 
 
                                         return (
@@ -1421,14 +1407,22 @@ function NovaViagem() {
                                                         : "transporte-opcao"
                                                 }
                                                 onClick={() =>
-                                                    setMeioTransporteId(
-                                                        selecionado
-                                                            ? ""
-                                                            : String(
-                                                                transporte.id
-                                                            )
-                                                    )
-                                                }
+    setMeiosTransporteIds(
+        atuais =>
+            atuais.includes(
+                idTransporte
+            )
+                ? atuais.filter(
+                    id =>
+                        id !==
+                        idTransporte
+                )
+                : [
+                    ...atuais,
+                    idTransporte
+                ]
+    )
+}
                                                 disabled={salvando}
                                             >
 
@@ -1446,8 +1440,7 @@ function NovaViagem() {
 
                             <p className="texto-ajuda">
 
-                                O cadastro atual do banco registra
-                                um meio de transporte por viagem.
+                                É possível selecionar mais de um meio de transporte.
 
                             </p>
 
