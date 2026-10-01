@@ -1,4 +1,9 @@
 import {
+    useEffect,
+    useState
+} from "react";
+
+import {
     useNavigate,
     useParams
 } from "react-router-dom";
@@ -7,13 +12,19 @@ import Header from "../components/Header.jsx";
 import Navbar from "../components/Navbar";
 
 import {
-    viagensRascunho,
-    viagensSolicitadas
-} from "../data/viagensMock";
+    buscarViagemPorId,
+    listarHistoricoViagem
+} from "../services/viagemService";
+
+import {
+    buscarCustosViagem
+} from "../services/financeiroService.jsx";
 
 import "../styles/viagens.css";
 
+
 function formatarData(data) {
+
     if (!data) {
         return "-";
     }
@@ -24,7 +35,30 @@ function formatarData(data) {
     return `${dia}/${mes}/${ano}`;
 }
 
+function formatarDataHora(data) {
+
+    if (!data) {
+        return "Data não informada";
+    }
+
+    const dataConvertida =
+        new Date(data);
+
+    if (
+        Number.isNaN(
+            dataConvertida.getTime()
+        )
+    ) {
+        return data;
+    }
+
+    return dataConvertida.toLocaleString(
+        "pt-BR"
+    );
+}
+
 function formatarMoeda(valor) {
+
     return Number(valor || 0).toLocaleString(
         "pt-BR",
         {
@@ -34,23 +68,30 @@ function formatarMoeda(valor) {
     );
 }
 
+
 function obterStatus(status) {
 
     switch (status) {
 
-        case "EM_RASCUNHO":
+        case "RASCUNHO":
             return {
                 texto: "Rascunho",
                 classe: "rascunho"
             };
 
-        case "EM_ANALISE":
+        case "SOLICITADA":
             return {
                 texto: "Em análise",
                 classe: "analise"
             };
 
-        case "ACEITA":
+        case "AJUSTES_SOLICITADOS":
+            return {
+                texto: "Ajustes solicitados",
+                classe: "ajustes"
+            };
+
+        case "APROVADA":
             return {
                 texto: "Aprovada",
                 classe: "aceita"
@@ -62,73 +103,20 @@ function obterStatus(status) {
                 classe: "rejeitada"
             };
 
+        case "CANCELADA":
+            return {
+                texto: "Cancelada",
+                classe: "cancelada"
+            };
+
         default:
             return {
-                texto: status,
+                texto: status || "Não informado",
                 classe: "rascunho"
             };
     }
 }
 
-function obterHistorico(viagem) {
-
-    if (viagem.historico?.length) {
-        return viagem.historico;
-    }
-
-    const historico = [];
-
-    if (viagem.status === "EM_RASCUNHO") {
-
-        historico.push({
-            status: "Rascunho",
-            data: viagem.dataCriacao || viagem.dataInicio,
-            descricao:
-                "Viagem criada e salva como rascunho."
-        });
-
-    } else {
-
-        historico.push({
-            status: "Rascunho",
-            data: viagem.dataCriacao || viagem.dataInicio,
-            descricao:
-                "Viagem criada inicialmente como rascunho."
-        });
-
-        historico.push({
-            status: "Em análise",
-            data: viagem.dataSolicitacao || viagem.dataInicio,
-            descricao:
-                "Viagem enviada para análise."
-        });
-
-        if (viagem.status === "ACEITA") {
-
-            historico.push({
-                status: "Aprovada",
-                data: viagem.dataAprovacao || viagem.dataFim,
-                descricao:
-                    "Viagem aprovada pelo gestor."
-            });
-
-        }
-
-        if (viagem.status === "REJEITADA") {
-
-            historico.push({
-                status: "Rejeitada",
-                data: viagem.dataRejeicao || viagem.dataFim,
-                descricao:
-                    viagem.justificativa ||
-                    "Viagem rejeitada pelo gestor."
-            });
-
-        }
-    }
-
-    return historico;
-}
 
 function DetalhesViagem() {
 
@@ -136,23 +124,186 @@ function DetalhesViagem() {
 
     const navigate = useNavigate();
 
-    const viagemRascunho =
-        viagensRascunho.find(
-            (item) =>
-                item.id === Number(id)
+
+    const [viagem, setViagem] =
+        useState(null);
+
+
+const [historico, setHistorico] =
+    useState([]);
+
+const [custos, setCustos] =
+    useState({
+        deslocamento: 0,
+        hospedagem: 0,
+        taxi: 0,
+        total: 0
+    });
+
+    const [carregando, setCarregando] =
+        useState(true);
+
+    const [erro, setErro] =
+        useState("");
+
+
+    /*
+     * ==========================================
+     * CARREGAR VIAGEM
+     * ==========================================
+     */
+
+    useEffect(() => {
+
+        async function carregarDados() {
+
+            try {
+
+                setCarregando(true);
+                setErro("");
+
+                const dadosViagem =
+                    await buscarViagemPorId(id);
+
+                setViagem(dadosViagem);
+
+                try {
+    const dadosCustos =
+        await buscarCustosViagem(id);
+
+    setCustos(
+        dadosCustos || {
+            deslocamento: 0,
+            hospedagem: 0,
+            taxi: 0,
+            total: 0
+        }
+    );
+
+} catch (erroCustos) {
+
+    console.error(
+        "Erro ao carregar custos:",
+        erroCustos
+    );
+
+    setCustos({
+        deslocamento: 0,
+        hospedagem: 0,
+        taxi: 0,
+        total: 0
+    });
+}
+
+                /*
+                 * O histórico possui um endpoint
+                 * separado no backend.
+                 */
+
+                try {
+
+                    const dadosHistorico =
+                        await listarHistoricoViagem(id);
+
+                    setHistorico(
+                        dadosHistorico || []
+                    );
+
+                } catch (erroHistorico) {
+
+                    console.error(
+                        "Erro ao carregar histórico:",
+                        erroHistorico
+                    );
+
+                    /*
+                     * Se o histórico falhar,
+                     * ainda conseguimos mostrar
+                     * os dados principais da viagem.
+                     */
+
+                    setHistorico([]);
+
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Erro ao carregar viagem:",
+                    error
+                );
+
+                setErro(
+                    error.message ||
+                    "Não foi possível carregar a viagem."
+                );
+
+                setViagem(null);
+
+            } finally {
+
+                setCarregando(false);
+
+            }
+
+        }
+
+        if (id) {
+            carregarDados();
+        }
+
+    }, [id]);
+
+
+    /*
+     * ==========================================
+     * CARREGANDO
+     * ==========================================
+     */
+
+    if (carregando) {
+
+        return (
+
+            <div className="app">
+
+                <Navbar />
+
+                <div className="main-area">
+
+                    <Header />
+
+                    <main className="content">
+
+                        <div className="empty-state">
+
+                            <h2>
+                                Carregando viagem...
+                            </h2>
+
+                            <p>
+                                Aguarde enquanto buscamos
+                                os dados da viagem.
+                            </p>
+
+                        </div>
+
+                    </main>
+
+                </div>
+
+            </div>
         );
+    }
 
-    const viagemSolicitada =
-        viagensSolicitadas.find(
-            (item) =>
-                item.id === Number(id)
-        );
 
-    const viagem =
-        viagemRascunho ||
-        viagemSolicitada;
+    /*
+     * ==========================================
+     * ERRO
+     * ==========================================
+     */
 
-    if (!viagem) {
+    if (erro || !viagem) {
 
         return (
 
@@ -173,8 +324,8 @@ function DetalhesViagem() {
                             </h2>
 
                             <p>
-                                A viagem solicitada
-                                não foi localizada.
+                                {erro ||
+                                    "A viagem solicitada não foi localizada."}
                             </p>
 
                             <button
@@ -197,32 +348,52 @@ function DetalhesViagem() {
         );
     }
 
+
+    /*
+     * ==========================================
+     * STATUS
+     * ==========================================
+     */
+
     const status =
         obterStatus(
             viagem.status
         );
 
-    const despesas =
-        viagem.despesas || [];
+
+    /*
+     * ==========================================
+     * DESPESAS
+     * ==========================================
+     *
+     * As despesas ainda não fazem parte
+     * do ViagemResponse.
+     *
+     * Essa parte será conectada ao endpoint
+     * de despesas quando adaptarmos essa tela.
+     */
 
     const totalDespesas =
-        despesas.reduce(
-            (total, despesa) =>
-                total +
-                Number(
-                    despesa.valor || 0
-                ),
-            0
-        );
+    Number(custos?.total || 0);
 
-    const podeAlterar =
-        viagem.status !== "ACEITA";
 
-    const podeRegistrarDespesas =
-        viagem.status === "ACEITA";
+    /*
+     * ==========================================
+     * PERMISSÕES DA TELA
+     * ==========================================
+     */
 
-    const historico =
-        obterHistorico(viagem);
+const statusNormalizado =
+    String(viagem.status || "")
+        .trim()
+        .toUpperCase();
+
+const podeAlterar =
+    statusNormalizado === "RASCUNHO" ||
+    statusNormalizado === "AJUSTES_SOLICITADOS";
+
+const podeRegistrarDespesas =
+    statusNormalizado === "APROVADA";
 
     return (
 
@@ -235,6 +406,11 @@ function DetalhesViagem() {
                 <Header />
 
                 <main className="content">
+
+
+                    {/* ===============================
+                        VOLTAR
+                    =============================== */}
 
                     <div className="page-back">
 
@@ -251,14 +427,17 @@ function DetalhesViagem() {
                     </div>
 
 
-                    {/* CABEÇALHO */}
+                    {/* ===============================
+                        CABEÇALHO
+                    =============================== */}
 
                     <section className="detail-header">
 
                         <div>
 
                             <span className="welcome-small">
-                                VIAGEM #{viagem.id}
+                                VIAGEM #
+                                {viagem.id}
                             </span>
 
                             <h2>
@@ -284,6 +463,7 @@ function DetalhesViagem() {
                                 {status.texto}
                             </span>
 
+
                             {podeAlterar && (
 
                                 <button
@@ -305,9 +485,12 @@ function DetalhesViagem() {
                     </section>
 
 
-                    {/* DADOS */}
+                    {/* ===============================
+                        DADOS DA VIAGEM
+                    =============================== */}
 
                     <section className="detail-card">
+
 
                         <div className="route-highlight">
 
@@ -319,6 +502,9 @@ function DetalhesViagem() {
 
                                 <strong>
                                     {viagem.origem}
+
+                                    {viagem.ufOrigem &&
+                                        ` - ${viagem.ufOrigem}`}
                                 </strong>
 
                                 <small>
@@ -343,6 +529,9 @@ function DetalhesViagem() {
 
                                 <strong>
                                     {viagem.destino}
+
+                                    {viagem.ufDestino &&
+                                        ` - ${viagem.ufDestino}`}
                                 </strong>
 
                                 <small>
@@ -358,6 +547,7 @@ function DetalhesViagem() {
 
                         <div className="info-grid-viagem">
 
+
                             <div className="info-item-viagem">
 
                                 <span>
@@ -368,7 +558,9 @@ function DetalhesViagem() {
                                     {formatarData(
                                         viagem.dataInicio
                                     )}
+
                                     {" – "}
+
                                     {formatarData(
                                         viagem.dataFim
                                     )}
@@ -384,9 +576,15 @@ function DetalhesViagem() {
                                 </span>
 
                                 <strong>
-                                    {viagem.transportes?.join(
-                                        ", "
-                                    ) || "Não informado"}
+
+                                    {
+                                        viagem.meiosTransporte
+                                            ?.join(", ")
+                                    }
+
+                                    {!viagem.meiosTransporte?.length &&
+                                        "Não informado"}
+
                                 </strong>
 
                             </div>
@@ -407,6 +605,10 @@ function DetalhesViagem() {
                         </div>
 
 
+                        {/* ===============================
+                            MOTIVO
+                        =============================== */}
+
                         {viagem.motivo && (
 
                             <div className="motivo">
@@ -424,12 +626,16 @@ function DetalhesViagem() {
                         )}
 
 
+                        {/* ===============================
+                            JUSTIFICATIVA
+                        =============================== */}
+
                         {viagem.justificativa && (
 
                             <div className="justificativa-box">
 
                                 <span>
-                                    JUSTIFICATIVA DA REJEIÇÃO
+                                    JUSTIFICATIVA
                                 </span>
 
                                 <p>
@@ -443,7 +649,9 @@ function DetalhesViagem() {
                     </section>
 
 
-                    {/* HISTÓRICO */}
+                    {/* ===============================
+                        HISTÓRICO
+                    =============================== */}
 
                     <section className="section">
 
@@ -469,39 +677,65 @@ function DetalhesViagem() {
 
                             <div className="historico">
 
-                                {historico.map(
-                                    (item, index) => (
+                                {historico.length === 0 ? (
 
-                                        <div
-                                            className="historico-item"
-                                            key={`${item.status}-${index}`}
-                                        >
+                                    <div className="empty-state">
 
-                                            <div className="historico-ponto" />
+                                        <p>
+                                            Nenhum histórico
+                                            disponível.
+                                        </p>
 
-                                            <div className="historico-linha" />
+                                    </div>
 
-                                            <div className="historico-conteudo">
+                                ) : (
 
-                                                <strong>
-                                                    {item.status}
-                                                </strong>
+                                    historico.map(
+                                        (item, index) => (
 
-                                                <span>
-                                                    {item.data
-                                                        ? formatarData(item.data)
-                                                        : "Data não informada"}
-                                                </span>
+                                            <div
+                                                className="historico-item"
+                                                key={
+                                                    `${item.status}-${index}`
+                                                }
+                                            >
 
-                                                <p>
-                                                    {item.descricao}
-                                                </p>
+                                                <div className="historico-ponto" />
+
+                                                <div className="historico-linha" />
+
+                                                <div className="historico-conteudo">
+
+                                                    <strong>
+    {item.status}
+</strong>
+
+<span>
+    {formatarDataHora(
+        item.dataAlteracao
+    )}
+</span>
+
+<p>
+    Responsável:{" "}
+    {item.nomeResponsavel ||
+        item.loginResponsavel ||
+        "Não informado"}
+</p>
+
+{item.observacao && (
+    <p>
+        {item.observacao}
+    </p>
+)}
+
+                                                </div>
 
                                             </div>
 
-                                        </div>
-
+                                        )
                                     )
+
                                 )}
 
                             </div>
@@ -511,7 +745,9 @@ function DetalhesViagem() {
                     </section>
 
 
-                    {/* FINANCEIRO */}
+                    {/* ===============================
+                        FINANCEIRO
+                    =============================== */}
 
                     <section className="section">
 
@@ -577,6 +813,7 @@ function DetalhesViagem() {
                         </div>
 
                     </section>
+
 
                 </main>
 

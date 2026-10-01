@@ -25,6 +25,8 @@ Aplicação web para gerenciamento de solicitações de viagens corporativas.
 
 ## Documentação
 
-- [Documento de Visão](docs/Doc_Vissao.pdf)
-- [Diagrama de casos de uso](docs/Caso_de_Uso)
+- [Documento de Visão](docs/DocVisao.pdf)
+- [Diagrama de casos de uso, sequência e Classes](docs/Diagramas.pdf)
 - [Requisitos](docs/Requistos.pdf)
+- [User Stories](docs/UserStories.pdf)
+- [Sprint Review e Restrospective](docs/SprintRev.pdf)

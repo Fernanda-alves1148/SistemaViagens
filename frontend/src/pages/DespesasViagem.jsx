@@ -1,14 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
 import Navbar from "../components/Navbar";
 
+import { buscarViagemPorId } from "../services/viagemService";
+
 import {
-    viagensSolicitadas
-} from "../data/viagensMock";
+    listarTiposDespesa,
+    listarDespesasPorViagem,
+    registrarDespesa as registrarDespesaApi,
+    excluirDespesa as excluirDespesaApi,
+    buscarCustosViagem
+} from "../services/financeiroService.jsx";
 
 import "../styles/viagens.css";
+
 
 function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString(
@@ -26,17 +33,27 @@ function obterHoje() {
         .split("T")[0];
 }
 
+function formatarData(data) {
+    if (!data) return "-";
+
+    const [ano, mes, dia] = data.split("-");
+
+    return `${dia}/${mes}/${ano}`;
+}
+
 function DespesasViagem() {
 
     const { id } = useParams();
 
     const navigate = useNavigate();
 
-    const viagem =
-        viagensSolicitadas.find(
-            (item) =>
-                item.id === Number(id)
-        );
+    const [viagem, setViagem] = useState(null);
+
+    const [carregando, setCarregando] =
+        useState(true);
+
+    const [erro, setErro] =
+        useState("");
 
     const [data, setData] =
         useState(obterHoje());
@@ -50,12 +67,116 @@ function DespesasViagem() {
     const [valor, setValor] =
         useState("");
 
+    
     const [despesas, setDespesas] =
-        useState(
-            viagem?.despesas || []
-        );
+        useState([]);
 
-    if (!viagem) {
+    const [tiposDespesa, setTiposDespesa] =
+    useState([]);
+
+const [custos, setCustos] =
+    useState({
+        deslocamento: 0,
+        hospedagem: 0,
+        taxi: 0,
+        total: 0
+    });
+
+const [processando, setProcessando] =
+    useState(false);
+
+    useEffect(() => {
+
+        async function carregarViagem() {
+
+            try {
+
+                setCarregando(true);
+                setErro("");
+
+                const [
+    dadosViagem,
+    dadosTipos,
+    dadosDespesas,
+    dadosCustos
+] = await Promise.all([
+    buscarViagemPorId(id),
+    listarTiposDespesa(),
+    listarDespesasPorViagem(id),
+    buscarCustosViagem(id)
+]);
+
+setViagem(dadosViagem);
+setTiposDespesa(dadosTipos || []);
+setDespesas(dadosDespesas || []);
+setCustos(dadosCustos || {
+    deslocamento: 0,
+    hospedagem: 0,
+    taxi: 0,
+    total: 0
+});
+
+            } catch (error) {
+
+                console.error(
+                    "Erro ao carregar viagem:",
+                    error
+                );
+
+                setErro(
+                    error.message ||
+                    "Não foi possível carregar a viagem."
+                );
+
+                setViagem(null);
+
+            } finally {
+
+                setCarregando(false);
+
+            }
+        }
+
+        carregarViagem();
+
+    }, [id]);
+
+
+    if (carregando) {
+
+        return (
+            <div className="app">
+
+                <Navbar />
+
+                <div className="main-area">
+
+                    <Header />
+
+                    <main className="content">
+
+                        <div className="empty-state">
+
+                            <h2>
+                                Carregando viagem...
+                            </h2>
+
+                            <p>
+                                Aguarde enquanto buscamos os dados da viagem.
+                            </p>
+
+                        </div>
+
+                    </main>
+
+                </div>
+
+            </div>
+        );
+    }
+
+
+    if (erro || !viagem) {
 
         return (
             <div className="app">
@@ -74,6 +195,11 @@ function DespesasViagem() {
                                 Viagem não encontrada
                             </h2>
 
+                            <p>
+                                {erro ||
+                                    "Não foi possível encontrar a viagem informada."}
+                            </p>
+
                             <button
                                 type="button"
                                 className="botao-destaque"
@@ -89,11 +215,22 @@ function DespesasViagem() {
                     </main>
 
                 </div>
+
             </div>
         );
     }
 
-    if (viagem.status !== "ACEITA") {
+
+    /*
+     * O backend utiliza APROVADA.
+     * O código antigo utilizava ACEITA.
+     */
+    if (
+    String(viagem.status || "")
+        .trim()
+        .toUpperCase() !== "APROVADA"
+)
+    {
 
         return (
             <div className="app">
@@ -140,91 +277,152 @@ function DespesasViagem() {
         );
     }
 
+
     const total =
-        despesas.reduce(
-            (soma, despesa) =>
-                soma +
-                Number(
-                    despesa.valor || 0
-                ),
-            0
+    Number(custos.total || 0);
+
+
+    async function adicionarDespesa() {
+
+    if (!data) {
+        alert("Informe a data da despesa.");
+        return;
+    }
+
+    if (data > obterHoje()) {
+        alert("A data da despesa não pode ser futura.");
+        return;
+    }
+
+    if (!tipo) {
+        alert("Selecione o tipo da despesa.");
+        return;
+    }
+
+    if (!descricao.trim()) {
+        alert("Informe uma descrição.");
+        return;
+    }
+
+    const valorNumerico =
+        Number(
+            String(valor)
+                .replace(",", ".")
         );
 
-    function registrarDespesa() {
+    if (
+        Number.isNaN(valorNumerico) ||
+        valorNumerico <= 0
+    ) {
+        alert(
+            "O valor deve ser maior que zero."
+        );
+        return;
+    }
 
-        if (!data) {
-            alert(
-                "Informe a data da despesa."
-            );
-            return;
-        }
+    try {
+        setProcessando(true);
 
-        if (data > obterHoje()) {
-            alert(
-                "A data da despesa não pode ser futura."
-            );
-            return;
-        }
+        await registrarDespesaApi(
+            id,
+            {
+                dataDespesa: data,
+                descricao: descricao.trim(),
+                valor: valorNumerico,
+                idTipo: Number(tipo)
+            }
+        );
 
-        if (!tipo) {
-            alert(
-                "Selecione o tipo da despesa."
-            );
-            return;
-        }
-
-        if (!descricao.trim()) {
-            alert(
-                "Informe uma descrição."
-            );
-            return;
-        }
-
-        const valorNumerico =
-            Number(
-                String(valor)
-                    .replace(",", ".")
-            );
-
-        if (
-            Number.isNaN(valorNumerico) ||
-            valorNumerico <= 0
-        ) {
-            alert(
-                "O valor deve ser maior que zero."
-            );
-            return;
-        }
-
-        const novaDespesa = {
-            id:
-                Date.now(),
-            data,
-            tipo,
-            descricao,
-            valor: valorNumerico
-        };
-
-        setDespesas([
-            ...despesas,
-            novaDespesa
+        const [
+            despesasAtualizadas,
+            custosAtualizados
+        ] = await Promise.all([
+            listarDespesasPorViagem(id),
+            buscarCustosViagem(id)
         ]);
+
+        setDespesas(
+            despesasAtualizadas || []
+        );
+
+        setCustos(
+            custosAtualizados || {
+                deslocamento: 0,
+                hospedagem: 0,
+                taxi: 0,
+                total: 0
+            }
+        );
 
         setData(obterHoje());
         setTipo("");
         setDescricao("");
         setValor("");
-    }
 
-    function excluirDespesa(idDespesa) {
+    } catch (error) {
+        console.error(
+            "Erro ao registrar despesa:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Não foi possível registrar a despesa."
+        );
+
+    } finally {
+        setProcessando(false);
+    }
+}
+
+
+    async function removerDespesa(
+    idDespesa
+) {
+
+    try {
+        setProcessando(true);
+
+        await excluirDespesaApi(
+            idDespesa
+        );
+
+        const [
+            despesasAtualizadas,
+            custosAtualizados
+        ] = await Promise.all([
+            listarDespesasPorViagem(id),
+            buscarCustosViagem(id)
+        ]);
 
         setDespesas(
-            despesas.filter(
-                (despesa) =>
-                    despesa.id !== idDespesa
-            )
+            despesasAtualizadas || []
         );
+
+        setCustos(
+            custosAtualizados || {
+                deslocamento: 0,
+                hospedagem: 0,
+                taxi: 0,
+                total: 0
+            }
+        );
+
+    } catch (error) {
+        console.error(
+            "Erro ao excluir despesa:",
+            error
+        );
+
+        alert(
+            error.message ||
+            "Não foi possível excluir a despesa."
+        );
+
+    } finally {
+        setProcessando(false);
     }
+}
 
     return (
 
@@ -269,8 +467,14 @@ function DespesasViagem() {
 
                             <p>
                                 {viagem.origem}
+                                {viagem.ufOrigem
+                                    ? ` - ${viagem.ufOrigem}`
+                                    : ""}
                                 {" → "}
                                 {viagem.destino}
+                                {viagem.ufDestino
+                                    ? ` - ${viagem.ufDestino}`
+                                    : ""}
                             </p>
 
                         </div>
@@ -332,33 +536,21 @@ function DespesasViagem() {
                                         )
                                     }
                                 >
+
                                     <option value="">
                                         Selecione
                                     </option>
 
-                                    <option value="Hospedagem">
-                                        Hospedagem
-                                    </option>
-
-                                    <option value="Alimentação">
-                                        Alimentação
-                                    </option>
-
-                                    <option value="Transporte">
-                                        Transporte
-                                    </option>
-
-                                    <option value="Combustível">
-                                        Combustível
-                                    </option>
-
-                                    <option value="Pedágios">
-                                        Pedágios
-                                    </option>
-
-                                    <option value="Outras">
-                                        Outras despesas
-                                    </option>
+                                    {tiposDespesa.map(
+    (tipoDespesa) => (
+        <option
+            key={tipoDespesa.id}
+            value={tipoDespesa.id}
+        >
+            {tipoDespesa.nome}
+        </option>
+    )
+)}
                                 </select>
 
                             </div>
@@ -416,10 +608,13 @@ function DespesasViagem() {
                                 type="button"
                                 className="botao-destaque"
                                 onClick={
-                                    registrarDespesa
-                                }
+    adicionarDespesa
+}
+disabled={processando}
                             >
-                                + Adicionar despesa
+                                {processando
+    ? "Processando..."
+    : "+ Adicionar despesa"}
                             </button>
 
                         </div>
@@ -482,14 +677,31 @@ function DespesasViagem() {
                                         <thead>
 
                                             <tr>
-                                                <th>Data</th>
-                                                <th>Tipo</th>
-                                                <th>Descrição</th>
-                                                <th>Valor</th>
-                                                <th>Ação</th>
+
+                                                <th>
+                                                    Data
+                                                </th>
+
+                                                <th>
+                                                    Tipo
+                                                </th>
+
+                                                <th>
+                                                    Descrição
+                                                </th>
+
+                                                <th>
+                                                    Valor
+                                                </th>
+
+                                                <th>
+                                                    Ação
+                                                </th>
+
                                             </tr>
 
                                         </thead>
+
 
                                         <tbody>
 
@@ -503,7 +715,9 @@ function DespesasViagem() {
                                                     >
 
                                                         <td>
-                                                            {despesa.data}
+                                                            {formatarData(
+                                                                despesa.dataDespesa
+                                                            )}
                                                         </td>
 
                                                         <td>
@@ -526,10 +740,11 @@ function DespesasViagem() {
                                                                 type="button"
                                                                 className="botao-excluir"
                                                                 onClick={() =>
-                                                                    excluirDespesa(
+                                                                    removerDespesa(
                                                                         despesa.id
                                                                     )
                                                                 }
+                                                                disabled={processando}
                                                             >
                                                                 🗑
                                                             </button>

@@ -6,4 +6,5 @@ import br.unioeste.backend.entity.Usuario;
 
 public interface UsuarioRepository {
     Optional<Usuario> findById(Integer id);
+    boolean isGestorAtual(Integer idUsuario);
 }

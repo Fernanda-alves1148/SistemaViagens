@@ -1,15 +1,16 @@
-import { useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
-import Navbar from "../components/Navbar";
+import Navbar from "../components/NavbarGestao";
+
+import { listarViagens } from "../services/viagemService";
 
 import {
-    viagensRascunho,
-    viagensSolicitadas
-} from "../data/viagensMock";
+    buscarDashboard
+} from "../services/financeiroService.jsx";
 
-import "../styles/dashboard.css";
+import "../styles/Dashboard.css";
 
 function formatarMoeda(valor) {
     return Number(valor || 0).toLocaleString(
@@ -21,273 +22,419 @@ function formatarMoeda(valor) {
     );
 }
 
-/*
- * Os mocks atuais usam dois padrões de status
- * (ex.: "ACEITA" nas telas do colaborador e
- * "APROVADA" nas telas de gestão).
- *
- * Normalizamos aqui para calcular os indicadores.
- * Quando o backend estiver pronto, convém unificar
- * o enum de status e remover esta função.
- */
-function normalizarStatus(status) {
+function obterTextoStatus(status) {
 
     switch (status) {
 
-        case "EM_RASCUNHO":
         case "RASCUNHO":
-            return "RASCUNHO";
+            return "Rascunho";
 
-        case "EM_ANALISE":
         case "SOLICITADA":
-            return "SOLICITADA";
+            return "Em análise";
 
-        case "ACEITA":
         case "APROVADA":
-            return "APROVADA";
+            return "Aprovada";
 
         case "REJEITADA":
-            return "REJEITADA";
+            return "Rejeitada";
 
         case "CANCELADA":
-            return "CANCELADA";
+            return "Cancelada";
+
+        case "AJUSTES_SOLICITADOS":
+            return "Ajustes solicitados";
 
         default:
-            return "RASCUNHO";
+            return status || "-";
     }
 }
 
-function somarDespesas(despesas) {
-    return (despesas || []).reduce(
-        (total, despesa) =>
-            total +
-            Number(despesa.valor || 0),
-        0
-    );
-}
+function obterClasseStatus(status) {
 
-function agruparSomar(itens, chave) {
+    switch (status) {
 
-    const mapa = new Map();
+        case "APROVADA":
+            return "status aceita";
 
-    itens.forEach((item) => {
-        const nome = item[chave];
-        const atual = mapa.get(nome) || 0;
-        mapa.set(
-            nome,
-            atual + Number(item.valor || 0)
-        );
-    });
+        case "REJEITADA":
+            return "status rejeitada";
 
-    return [...mapa.entries()]
-        .map(([nome, total]) => ({
-            nome,
-            total
-        }))
-        .sort((a, b) => b.total - a.total);
+        case "SOLICITADA":
+            return "status analise";
+
+        case "AJUSTES_SOLICITADOS":
+            return "status ajustes";
+
+        case "CANCELADA":
+            return "status cancelada";
+
+        case "RASCUNHO":
+            return "status rascunho";
+
+        default:
+            return "status rascunho";
+    }
 }
 
 function Dashboard() {
 
     const navigate = useNavigate();
 
-    /*
-     * Enquanto o backend não estiver conectado,
-     * calculamos os indicadores a partir dos mocks.
-     * Depois, basta trocar por buscarIndicadores()
-     * do services/viagensService.
-     */
-    const indicadores = useMemo(() => {
+    const [viagens, setViagens] =
+        useState([]);
 
-        const viagens = [
-            ...viagensRascunho,
-            ...viagensSolicitadas
-        ].map((viagem) => ({
-            ...viagem,
-            status: normalizarStatus(
-                viagem.status
-            )
-        }));
+    const [indicadores, setIndicadores] =
+    useState({
+        totalViagens: 0,
+        viagensAprovadas: 0,
+        viagensRejeitadas: 0,
+        custoTotal: 0,
+        custoMedioPorViagem: 0
+    });
 
-        const despesas = viagens.flatMap(
-            (viagem) =>
-                (viagem.despesas || []).map(
-                    (despesa) => ({
-                        ...despesa,
-                        viagemId: viagem.id,
-                        destino: viagem.destino
-                    })
-                )
-        );
+    const [carregando, setCarregando] =
+        useState(true);
 
-        const totalGasto = despesas.reduce(
-            (total, despesa) =>
-                total +
-                Number(despesa.valor || 0),
-            0
-        );
+    const [erro, setErro] =
+        useState("");
 
-        const viagensComDespesa =
-            viagens.filter(
-                (viagem) =>
-                    (viagem.despesas || [])
-                        .length > 0
-            );
 
-        const custoMedio =
-            viagensComDespesa.length > 0
-                ? totalGasto /
-                  viagensComDespesa.length
-                : 0;
+    useEffect(() => {
 
-        const contagemDestinos =
-            new Map();
+        async function carregarViagens() {
 
-        viagens.forEach((viagem) => {
-            const atual =
-                contagemDestinos.get(
-                    viagem.destino
-                ) || 0;
+            try {
 
-            contagemDestinos.set(
-                viagem.destino,
-                atual + 1
-            );
-        });
+                setCarregando(true);
+                setErro("");
 
-        const rankingDestinos = [
-            ...contagemDestinos.entries()
-        ]
-            .map(([destino, quantidade]) => ({
-                destino,
-                quantidade
-            }))
-            .sort(
-                (a, b) =>
-                    b.quantidade - a.quantidade
-            );
+                const [
+    respostaViagens,
+    respostaDashboard
+] = await Promise.all([
+    listarViagens(),
+    buscarDashboard()
+]);
 
-        const maioresGastos = viagens
-            .map((viagem) => ({
-                ...viagem,
-                total: somarDespesas(
-                    viagem.despesas
-                )
-            }))
-            .filter(
-                (viagem) => viagem.total > 0
-            )
-            .sort(
-                (a, b) => b.total - a.total
-            )
-            .slice(0, 5);
+setViagens(
+    respostaViagens || []
+);
 
-        return {
-            quantidadeTotal: viagens.length,
-            quantidadeAnalise:
-                viagens.filter(
-                    (v) =>
-                        v.status ===
-                        "SOLICITADA"
-                ).length,
-            quantidadeAprovadas:
-                viagens.filter(
-                    (v) =>
-                        v.status ===
-                        "APROVADA"
-                ).length,
-            quantidadeRejeitadas:
-                viagens.filter(
-                    (v) =>
-                        v.status ===
-                        "REJEITADA"
-                ).length,
-            totalGasto,
-            custoMedio,
-            destinoMaisVisitado:
-                rankingDestinos[0] || null,
-            rankingDestinos,
-            gastosPorTipo: agruparSomar(
-                despesas,
-                "tipo"
-            ),
-            gastosPorDestino: agruparSomar(
-                despesas,
-                "destino"
-            ).slice(0, 5),
-            maioresGastos
-        };
+setIndicadores(
+    respostaDashboard || {
+        totalViagens: 0,
+        viagensAprovadas: 0,
+        viagensRejeitadas: 0,
+        custoTotal: 0,
+        custoMedioPorViagem: 0
+    }
+);
+
+            } catch (error) {
+
+                console.error(
+                    "Erro ao carregar viagens:",
+                    error
+                );
+
+                setErro(
+                    error.message ||
+                    "Não foi possível carregar as viagens."
+                );
+
+                setViagens([]);
+
+            } finally {
+
+                setCarregando(false);
+
+            }
+        }
+
+        carregarViagens();
+
     }, []);
 
-    const {
-        quantidadeTotal,
-        quantidadeAnalise,
-        quantidadeAprovadas,
-        quantidadeRejeitadas,
-        totalGasto,
-        custoMedio,
-        destinoMaisVisitado,
-        gastosPorTipo,
-        gastosPorDestino,
-        maioresGastos
-    } = indicadores;
+
+    const quantidadeTotal =
+    Number(
+        indicadores.totalViagens ||
+        viagens.length
+    );
+
+const quantidadeAnalise =
+    viagens.filter(
+        (viagem) =>
+            normalizarStatus(viagem.status) ===
+            "SOLICITADA"
+    ).length;
+
+const quantidadeAprovadas =
+    Number(
+        indicadores.viagensAprovadas || 0
+    );
+
+const quantidadeRejeitadas =
+    Number(
+        indicadores.viagensRejeitadas || 0
+    );
+
+const quantidadeRascunhos =
+    viagens.filter(
+        (viagem) =>
+            normalizarStatus(viagem.status) ===
+            "RASCUNHO"
+    ).length;
+
+const totalGasto =
+    Number(
+        indicadores.custoTotal || 0
+    );
+
+const custoMedio =
+    Number(
+        indicadores.custoMedioPorViagem || 0
+    );
+
+    const destinoMaisVisitado =
+        viagens.length > 0
+            ? (() => {
+
+                const contagem =
+                    new Map();
+
+                viagens.forEach(
+                    (viagem) => {
+
+                        const destino =
+                            viagem.destino;
+
+                        const atual =
+                            contagem.get(
+                                destino
+                            ) || 0;
+
+                        contagem.set(
+                            destino,
+                            atual + 1
+                        );
+                    }
+                );
+
+                return [
+                    ...contagem.entries()
+                ]
+                    .map(
+                        ([
+                            destino,
+                            quantidade
+                        ]) => ({
+                            destino,
+                            quantidade
+                        })
+                    )
+                    .sort(
+                        (a, b) =>
+                            b.quantidade -
+                            a.quantidade
+                    )[0] || null;
+
+            })()
+            : null;
+
 
     /*
-     * Dados do gráfico de rosca (situação).
+     * Ainda não temos despesas vindas
+     * do backend.
      */
+    const gastosPorTipo = [];
+
+    const gastosPorDestino = [];
+
+    const maioresGastos = [];
+    
+    function normalizarStatus(status) {
+    return String(status || "")
+        .trim()
+        .toUpperCase()
+        .replaceAll(" ", "_");
+}
+
+    /*
+     * Dados do gráfico de rosca.
+     */
+
     const baseCalculo =
-        Math.max(quantidadeTotal, 1);
+        Math.max(
+            quantidadeTotal,
+            1
+        );
+
 
     const percentuais = {
+
         aprovadas:
             (quantidadeAprovadas /
                 baseCalculo) *
             100,
+
         analise:
             (quantidadeAnalise /
                 baseCalculo) *
             100,
+
         rejeitadas:
             (quantidadeRejeitadas /
                 baseCalculo) *
             100
     };
 
-    percentuais.rascunhos = Math.max(
-        100 -
-            percentuais.aprovadas -
-            percentuais.analise -
-            percentuais.rejeitadas,
-        0
-    );
+
+    percentuais.rascunhos =
+        (quantidadeRascunhos /
+            baseCalculo) *
+        100;
+
 
     const CORES = {
-        aprovadas: "#7c8b63",
-        analise: "#d9a45b",
-        rejeitadas: "#b96a6a",
-        rascunhos: "#b9bdb0"
+
+        aprovadas:
+            "#7c8b63",
+
+        analise:
+            "#d9a45b",
+
+        rejeitadas:
+            "#b96a6a",
+
+        rascunhos:
+            "#b9bdb0"
     };
 
+
     const gradienteRosca = [
+
         `${CORES.aprovadas} 0 ${percentuais.aprovadas}%`,
+
         `${CORES.analise} ${percentuais.aprovadas}% ${percentuais.aprovadas + percentuais.analise}%`,
+
         `${CORES.rejeitadas} ${percentuais.aprovadas + percentuais.analise}% ${percentuais.aprovadas + percentuais.analise + percentuais.rejeitadas}%`,
+
         `${CORES.rascunhos} ${percentuais.aprovadas + percentuais.analise + percentuais.rejeitadas}% 100%`
+
     ].join(", ");
 
-    const maximoTipo = Math.max(
-        ...gastosPorTipo.map(
-            (item) => item.total
-        ),
-        1
-    );
 
-    const maximoDestino = Math.max(
-        ...gastosPorDestino.map(
-            (item) => item.total
-        ),
-        1
-    );
+    const maximoTipo =
+        Math.max(
+            ...gastosPorTipo.map(
+                (item) =>
+                    item.total
+            ),
+            1
+        );
+
+
+    const maximoDestino =
+        Math.max(
+            ...gastosPorDestino.map(
+                (item) =>
+                    item.total
+            ),
+            1
+        );
+
+
+    if (carregando) {
+
+        return (
+
+            <div className="app">
+
+                <Navbar />
+
+                <div className="main-area">
+
+                    <Header />
+
+                    <main className="content">
+
+                        <section className="section">
+
+                            <div className="empty-state">
+
+                                <h3>
+                                    Carregando dashboard...
+                                </h3>
+
+                                <p>
+                                    Aguarde enquanto
+                                    buscamos os dados
+                                    das viagens.
+                                </p>
+
+                            </div>
+
+                        </section>
+
+                    </main>
+
+                </div>
+
+            </div>
+        );
+    }
+
+
+    if (erro) {
+
+        return (
+
+            <div className="app">
+
+                <Navbar />
+
+                <div className="main-area">
+
+                    <Header />
+
+                    <main className="content">
+
+                        <section className="section">
+
+                            <div className="empty-state">
+
+                                <h3>
+                                    Não foi possível
+                                    carregar o dashboard
+                                </h3>
+
+                                <p>
+                                    {erro}
+                                </p>
+
+                                <button
+                                    type="button"
+                                    className="botao-secundario"
+                                    onClick={() =>
+                                        window.location.reload()
+                                    }
+                                >
+                                    Tentar novamente
+                                </button>
+
+                            </div>
+
+                        </section>
+
+                    </main>
+
+                </div>
+
+            </div>
+        );
+    }
+
 
     return (
 
@@ -300,6 +447,7 @@ function Dashboard() {
                 <Header />
 
                 <main className="content">
+
 
                     {/* ===============================
                         CABEÇALHO
@@ -333,6 +481,7 @@ function Dashboard() {
                     =============================== */}
 
                     <section className="cards indicadores-dashboard">
+
 
                         <div className="summary-card">
 
@@ -452,15 +601,21 @@ function Dashboard() {
                             <div>
 
                                 <strong className="destino-indicador">
+
                                     {destinoMaisVisitado
                                         ? destinoMaisVisitado.destino
                                         : "-"}
+
                                 </strong>
 
                                 <span>
+
                                     {destinoMaisVisitado
+
                                         ? `Destino mais visitado (${destinoMaisVisitado.quantidade}x)`
+
                                         : "Destino mais visitado"}
+
                                 </span>
 
                             </div>
@@ -500,7 +655,8 @@ function Dashboard() {
                                 <div
                                     className="rosca"
                                     style={{
-                                        background: `conic-gradient(${gradienteRosca})`
+                                        background:
+                                            `conic-gradient(${gradienteRosca})`
                                     }}
                                 >
 
@@ -521,7 +677,9 @@ function Dashboard() {
 
                                 <ul className="rosca-legenda">
 
+
                                     <li>
+
                                         <span
                                             className="legenda-cor"
                                             style={{
@@ -529,13 +687,18 @@ function Dashboard() {
                                                     CORES.aprovadas
                                             }}
                                         />
+
                                         Aprovadas
+
                                         <strong>
                                             {quantidadeAprovadas}
                                         </strong>
+
                                     </li>
 
+
                                     <li>
+
                                         <span
                                             className="legenda-cor"
                                             style={{
@@ -543,13 +706,18 @@ function Dashboard() {
                                                     CORES.analise
                                             }}
                                         />
+
                                         Em análise
+
                                         <strong>
                                             {quantidadeAnalise}
                                         </strong>
+
                                     </li>
 
+
                                     <li>
+
                                         <span
                                             className="legenda-cor"
                                             style={{
@@ -557,13 +725,18 @@ function Dashboard() {
                                                     CORES.rejeitadas
                                             }}
                                         />
+
                                         Rejeitadas
+
                                         <strong>
                                             {quantidadeRejeitadas}
                                         </strong>
+
                                     </li>
 
+
                                     <li>
+
                                         <span
                                             className="legenda-cor"
                                             style={{
@@ -571,16 +744,13 @@ function Dashboard() {
                                                     CORES.rascunhos
                                             }}
                                         />
+
                                         Rascunhos
+
                                         <strong>
-                                            {Math.max(
-                                                quantidadeTotal -
-                                                    quantidadeAprovadas -
-                                                    quantidadeAnalise -
-                                                    quantidadeRejeitadas,
-                                                0
-                                            )}
+                                            {quantidadeRascunhos}
                                         </strong>
+
                                     </li>
 
                                 </ul>
@@ -632,9 +802,11 @@ function Dashboard() {
                                             >
 
                                                 <span className="barra-valor">
+
                                                     {formatarMoeda(
                                                         item.total
                                                     )}
+
                                                 </span>
 
                                                 <div className="barra-area">
@@ -642,19 +814,22 @@ function Dashboard() {
                                                     <div
                                                         className="barra-preenchimento"
                                                         style={{
-                                                            height: `${Math.max(
-                                                                (item.total /
-                                                                    maximoTipo) *
+                                                            height:
+                                                                `${Math.max(
+                                                                    (item.total /
+                                                                        maximoTipo) *
                                                                     100,
-                                                                3
-                                                            )}%`
+                                                                    3
+                                                                )}%`
                                                         }}
                                                     />
 
                                                 </div>
 
                                                 <span className="barra-rotulo">
+
                                                     {item.nome}
+
                                                 </span>
 
                                             </div>
@@ -740,12 +915,13 @@ function Dashboard() {
                                                     <div
                                                         className="item-barra-preenchimento"
                                                         style={{
-                                                            width: `${Math.max(
-                                                                (item.total /
-                                                                    maximoDestino) *
+                                                            width:
+                                                                `${Math.max(
+                                                                    (item.total /
+                                                                        maximoDestino) *
                                                                     100,
-                                                                3
-                                                            )}%`
+                                                                    3
+                                                                )}%`
                                                         }}
                                                     />
 
@@ -846,7 +1022,9 @@ function Dashboard() {
                                             (viagem) => (
 
                                                 <tr
-                                                    key={viagem.id}
+                                                    key={
+                                                        viagem.id
+                                                    }
                                                 >
 
                                                     <td>
@@ -873,10 +1051,13 @@ function Dashboard() {
                                                             </strong>
 
                                                             <span>
+
                                                                 de{" "}
+
                                                                 {
                                                                     viagem.origem
                                                                 }
+
                                                             </span>
 
                                                         </div>
@@ -887,27 +1068,15 @@ function Dashboard() {
                                                     <td>
 
                                                         <span
-                                                            className={`status ${viagem.status === "APROVADA"
-                                                                ? "aceita"
-                                                                : viagem.status === "REJEITADA"
-                                                                    ? "rejeitada"
-                                                                    : viagem.status === "SOLICITADA"
-                                                                        ? "analise"
-                                                                        : "rascunho"
-                                                                }`}
-                                                        >
-                                                            {
-                                                                viagem.status ===
-                                                                "APROVADA"
-                                                                    ? "Aprovada"
-                                                                    : viagem.status ===
-                                                                        "REJEITADA"
-                                                                        ? "Rejeitada"
-                                                                        : viagem.status ===
-                                                                            "SOLICITADA"
-                                                                            ? "Em análise"
-                                                                            : "Rascunho"
+                                                            className={
+                                                                obterClasseStatus(
+                                                                    viagem.status
+                                                                )
                                                             }
+                                                        >
+                                                            {obterTextoStatus(
+                                                                viagem.status
+                                                            )}
                                                         </span>
 
                                                     </td>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
@@ -6,10 +6,17 @@ import Navbar from "../components/Navbar";
 import Modal from "../components/Modal";
 
 import {
-    viagensSolicitadas
-} from "../data/viagensMock";
+    listarViagens
+} from "../services/viagemService";
 
 import "../styles/viagens.css";
+
+
+/*
+ * ============================================================
+ * FUNÇÕES AUXILIARES
+ * ============================================================
+ */
 
 function formatarData(data) {
 
@@ -17,34 +24,398 @@ function formatarData(data) {
         return "-";
     }
 
-    const [ano, mes, dia] =
-        data.split("-");
+    const partes =
+        String(data).split("-");
+
+    if (partes.length !== 3) {
+        return data;
+    }
+
+    const [
+        ano,
+        mes,
+        dia
+    ] = partes;
 
     return `${dia}/${mes}/${ano}`;
 }
 
+
+/*
+ * O banco/backend trabalha com:
+ *
+ * Rascunho
+ * Solicitada
+ * Ajustes
+ * Aprovada
+ * Rejeitada
+ * Cancelada
+ *
+ * O frontend usa nomes padronizados.
+ */
+function normalizarStatus(status) {
+
+    if (!status) {
+        return "";
+    }
+
+    const valor =
+        String(status)
+            .trim()
+            .toLowerCase();
+
+    switch (valor) {
+
+        case "rascunho":
+            return "RASCUNHO";
+
+        case "solicitada":
+            return "SOLICITADA";
+
+        case "ajustes":
+        case "ajuste":
+        case "ajustes solicitados":
+            return "AJUSTES_SOLICITADOS";
+
+        case "aprovada":
+            return "APROVADA";
+
+        case "rejeitada":
+            return "REJEITADA";
+
+        case "cancelada":
+            return "CANCELADA";
+
+        default:
+            return String(status).toUpperCase();
+    }
+}
+
+
+/*
+ * O backend atual usa "meioTransporte".
+ *
+ * Mantemos compatibilidade com versões que possam
+ * retornar "meiosTransporte".
+ */
+function obterTransportes(viagem) {
+
+    if (
+        Array.isArray(
+            viagem.meiosTransporte
+        )
+        &&
+        viagem.meiosTransporte.length > 0
+    ) {
+
+        return viagem.meiosTransporte;
+    }
+
+
+    if (viagem.meioTransporte) {
+
+        return [
+            viagem.meioTransporte
+        ];
+    }
+
+
+    return [];
+}
+
+
+function obterClasseStatus(status) {
+
+    switch (status) {
+
+        case "SOLICITADA":
+            return "status analise";
+
+        case "AJUSTES_SOLICITADOS":
+            return "status ajustes";
+
+        case "APROVADA":
+            return "status aceita";
+
+        case "REJEITADA":
+            return "status rejeitada";
+
+        case "CANCELADA":
+            return "status cancelada";
+
+        default:
+            return "status rascunho";
+    }
+}
+
+
+function obterTextoStatus(status) {
+
+    switch (status) {
+
+        case "SOLICITADA":
+            return "Em análise";
+
+        case "AJUSTES_SOLICITADOS":
+            return "Ajustes solicitados";
+
+        case "APROVADA":
+            return "Aprovada";
+
+        case "REJEITADA":
+            return "Rejeitada";
+
+        case "CANCELADA":
+            return "Cancelada";
+
+        case "RASCUNHO":
+            return "Rascunho";
+
+        default:
+            return status || "Não informado";
+    }
+}
+
+
+/*
+ * ============================================================
+ * COMPONENTE
+ * ============================================================
+ */
+
 function ViagensSolicitadas() {
 
-    const navigate = useNavigate();
+    const navigate =
+        useNavigate();
 
+
+    /*
+     * Lista real vinda do backend.
+     */
+    const [viagens, setViagens] =
+        useState([]);
+
+
+    /*
+     * Modal da justificativa.
+     */
     const [
         justificativaSelecionada,
         setJustificativaSelecionada
     ] = useState(null);
 
+
+    /*
+     * Controle de carregamento.
+     */
+    const [carregando, setCarregando] =
+        useState(true);
+
+
+    /*
+     * Erro de comunicação com a API.
+     */
+    const [erro, setErro] =
+        useState("");
+
+
+    /*
+     * ========================================================
+     * CARREGAR VIAGENS
+     * ========================================================
+     */
+
+    async function carregarViagens() {
+
+        setCarregando(true);
+
+        setErro("");
+
+
+        try {
+
+            const resposta =
+                await listarViagens();
+
+
+            const lista =
+                Array.isArray(resposta)
+                    ? resposta
+                    : [];
+
+
+            const viagensNormalizadas =
+                lista.map(
+                    (viagem) => ({
+
+                        ...viagem,
+
+                        status:
+                            normalizarStatus(
+                                viagem.status
+                            ),
+
+                        transportes:
+                            obterTransportes(
+                                viagem
+                            )
+
+                    })
+                );
+
+
+            setViagens(
+                viagensNormalizadas
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Erro ao carregar solicitações:",
+                error
+            );
+
+
+            setErro(
+                error?.message ||
+                "Não foi possível carregar as solicitações."
+            );
+
+
+        } finally {
+
+            setCarregando(false);
+        }
+    }
+
+
+    /*
+     * Executa quando a tela abre.
+     */
+    useEffect(() => {
+
+        carregarViagens();
+
+    }, []);
+
+
+    /*
+     * ========================================================
+     * SEPARAÇÃO DAS VIAGENS
+     * ========================================================
+     *
+     * Em análise:
+     *
+     * SOLICITADA
+     *
+     * Histórico:
+     *
+     * qualquer viagem que já tenha saído de
+     * SOLICITADA e não seja RASCUNHO.
+     *
+     * Assim incluímos:
+     *
+     * APROVADA
+     * REJEITADA
+     * AJUSTES_SOLICITADOS
+     * CANCELADA
+     */
+
     const viagensEmAnalise =
-        viagensSolicitadas.filter(
+        viagens.filter(
             (viagem) =>
                 viagem.status ===
-                "EM_ANALISE"
+                "SOLICITADA"
         );
 
+
     const outrasSolicitacoes =
-        viagensSolicitadas.filter(
+        viagens.filter(
             (viagem) =>
                 viagem.status !==
-                "EM_ANALISE"
+                "SOLICITADA"
+                &&
+                viagem.status !==
+                "RASCUNHO"
         );
+
+
+    /*
+     * ========================================================
+     * MODAL DE JUSTIFICATIVA
+     * ========================================================
+     */
+
+    function abrirJustificativa(
+        viagem,
+        event
+    ) {
+
+        event.stopPropagation();
+
+
+        setJustificativaSelecionada(
+            viagem.justificativa ||
+            "Nenhuma justificativa informada."
+        );
+    }
+
+
+    /*
+     * ========================================================
+     * CARREGAMENTO
+     * ========================================================
+     */
+
+    if (carregando) {
+
+        return (
+            <div className="app">
+
+                <Navbar />
+
+                <div className="main-area">
+
+                    <Header />
+
+                    <main className="content">
+
+                        <section className="welcome">
+
+                            <div>
+
+                                <span className="welcome-small">
+                                    SOLICITAÇÕES
+                                </span>
+
+                                <h2>
+                                    Carregando solicitações...
+                                </h2>
+
+                                <p>
+                                    Buscando as viagens
+                                    no servidor.
+                                </p>
+
+                            </div>
+
+                        </section>
+
+                    </main>
+
+                </div>
+
+            </div>
+        );
+    }
+
+
+    /*
+     * ========================================================
+     * TELA
+     * ========================================================
+     */
 
     return (
 
@@ -57,6 +428,7 @@ function ViagensSolicitadas() {
                 <Header />
 
                 <main className="content">
+
 
                     <div className="page-back">
 
@@ -95,7 +467,40 @@ function ViagensSolicitadas() {
                     </section>
 
 
-                    {/* EM ANÁLISE */}
+                    {/* =================================================
+                        ERRO
+                    ================================================= */}
+
+                    {erro && (
+
+                        <div className="info-aviso">
+
+                            <strong>
+                                Não foi possível carregar as viagens.
+                            </strong>
+
+                            <p>
+                                {erro}
+                            </p>
+
+                            <button
+                                type="button"
+                                className="botao-secundario"
+                                onClick={
+                                    carregarViagens
+                                }
+                            >
+                                Tentar novamente
+                            </button>
+
+                        </div>
+
+                    )}
+
+
+                    {/* =================================================
+                        EM ANÁLISE
+                    ================================================= */}
 
                     <section className="section">
 
@@ -146,13 +551,27 @@ function ViagensSolicitadas() {
                                     <thead>
 
                                         <tr>
-                                            <th>Viagem</th>
-                                            <th>Período</th>
-                                            <th>Transporte</th>
-                                            <th>Situação</th>
+
+                                            <th>
+                                                Viagem
+                                            </th>
+
+                                            <th>
+                                                Período
+                                            </th>
+
+                                            <th>
+                                                Transporte
+                                            </th>
+
+                                            <th>
+                                                Situação
+                                            </th>
+
                                         </tr>
 
                                     </thead>
+
 
                                     <tbody>
 
@@ -160,7 +579,9 @@ function ViagensSolicitadas() {
                                             (viagem) => (
 
                                                 <tr
-                                                    key={viagem.id}
+                                                    key={
+                                                        viagem.id
+                                                    }
                                                     className="linha-clicavel"
                                                     onClick={() =>
                                                         navigate(
@@ -168,6 +589,8 @@ function ViagensSolicitadas() {
                                                         )
                                                     }
                                                 >
+
+                                                    {/* VIAGEM */}
 
                                                     <td>
 
@@ -180,13 +603,18 @@ function ViagensSolicitadas() {
                                                             <div>
 
                                                                 <strong>
+
                                                                     {viagem.origem}
                                                                     {" → "}
                                                                     {viagem.destino}
+
                                                                 </strong>
 
                                                                 <span>
-                                                                    Viagem #{viagem.id}
+
+                                                                    Viagem #
+                                                                    {viagem.id}
+
                                                                 </span>
 
                                                             </div>
@@ -196,35 +624,53 @@ function ViagensSolicitadas() {
                                                     </td>
 
 
+                                                    {/* PERÍODO */}
+
                                                     <td>
 
                                                         <strong>
+
                                                             {formatarData(
                                                                 viagem.dataInicio
                                                             )}
+
                                                         </strong>
 
                                                         <span className="texto-suave">
+
                                                             {" "}até{" "}
+
                                                             {formatarData(
                                                                 viagem.dataFim
                                                             )}
+
                                                         </span>
 
                                                     </td>
 
 
+                                                    {/* TRANSPORTE */}
+
                                                     <td>
+
                                                         {viagem.transportes?.join(
                                                             ", "
-                                                        ) || "Não informado"}
+                                                        )
+                                                            ||
+                                                            "Não informado"
+                                                        }
+
                                                     </td>
 
+
+                                                    {/* STATUS */}
 
                                                     <td>
 
                                                         <span className="status analise">
+
                                                             Em análise
+
                                                         </span>
 
                                                     </td>
@@ -245,7 +691,9 @@ function ViagensSolicitadas() {
                     </section>
 
 
-                    {/* HISTÓRICO DE SOLICITAÇÕES */}
+                    {/* =================================================
+                        HISTÓRICO
+                    ================================================= */}
 
                     <section className="section">
 
@@ -259,7 +707,8 @@ function ViagensSolicitadas() {
 
                                 <p>
                                     Viagens que já receberam
-                                    uma decisão.
+                                    uma decisão ou passaram
+                                    por outra etapa do fluxo.
                                 </p>
 
                             </div>
@@ -287,100 +736,180 @@ function ViagensSolicitadas() {
                                     <thead>
 
                                         <tr>
-                                            <th>Viagem</th>
-                                            <th>Período</th>
-                                            <th>Transporte</th>
-                                            <th>Situação</th>
+
+                                            <th>
+                                                Viagem
+                                            </th>
+
+                                            <th>
+                                                Período
+                                            </th>
+
+                                            <th>
+                                                Transporte
+                                            </th>
+
+                                            <th>
+                                                Situação
+                                            </th>
+
                                         </tr>
 
                                     </thead>
 
+
                                     <tbody>
 
                                         {outrasSolicitacoes.map(
-                                            (viagem) => (
+                                            (viagem) => {
 
-                                                <tr
-                                                    key={viagem.id}
-                                                    className="linha-clicavel"
-                                                    onClick={() =>
-                                                        navigate(
-                                                            `/viagem/${viagem.id}`
-                                                        )
-                                                    }
-                                                >
+                                                const classeStatus =
+                                                    obterClasseStatus(
+                                                        viagem.status
+                                                    );
 
-                                                    <td>
-
-                                                        <strong>
-                                                            {viagem.origem}
-                                                            {" → "}
-                                                            {viagem.destino}
-                                                        </strong>
-
-                                                        <span className="texto-suave">
-                                                            Viagem #{viagem.id}
-                                                        </span>
-
-                                                    </td>
+                                                const textoStatus =
+                                                    obterTextoStatus(
+                                                        viagem.status
+                                                    );
 
 
-                                                    <td>
+                                                return (
 
-                                                        {formatarData(
-                                                            viagem.dataInicio
-                                                        )}
+                                                    <tr
+                                                        key={
+                                                            viagem.id
+                                                        }
+                                                        className="linha-clicavel"
+                                                        onClick={() =>
+                                                            navigate(
+                                                                `/viagem/${viagem.id}`
+                                                            )
+                                                        }
+                                                    >
 
-                                                        {" até "}
+                                                        {/* VIAGEM */}
 
-                                                        {formatarData(
-                                                            viagem.dataFim
-                                                        )}
+                                                        <td>
 
-                                                    </td>
+                                                            <div className="viagem-cell">
+
+                                                                <div className="viagem-icon">
+                                                                    →
+                                                                </div>
+
+                                                                <div>
+
+                                                                    <strong>
+
+                                                                        {viagem.origem}
+                                                                        {" → "}
+                                                                        {viagem.destino}
+
+                                                                    </strong>
+
+                                                                    <span className="texto-suave">
+
+                                                                        Viagem #
+                                                                        {viagem.id}
+
+                                                                    </span>
+
+                                                                </div>
+
+                                                            </div>
+
+                                                        </td>
 
 
-                                                    <td>
-                                                        {viagem.transportes?.join(
-                                                            ", "
-                                                        ) || "Não informado"}
-                                                    </td>
+                                                        {/* PERÍODO */}
 
+                                                        <td>
 
-                                                    <td>
+                                                            <strong>
 
-                                                        {viagem.status ===
-                                                        "ACEITA" ? (
+                                                                {formatarData(
+                                                                    viagem.dataInicio
+                                                                )}
 
-                                                            <span className="status aceita">
-                                                                Aprovada
+                                                            </strong>
+
+                                                            <span className="texto-suave">
+
+                                                                {" "}até{" "}
+
+                                                                {formatarData(
+                                                                    viagem.dataFim
+                                                                )}
+
                                                             </span>
 
-                                                        ) : (
+                                                        </td>
 
-                                                            <button
-                                                                type="button"
-                                                                className="status rejeitada status-button"
-                                                                onClick={(event) => {
 
-                                                                    event.stopPropagation();
+                                                        {/* TRANSPORTE */}
 
-                                                                    setJustificativaSelecionada(
-                                                                        viagem.justificativa ||
-                                                                        "Nenhuma justificativa informada."
-                                                                    );
-                                                                }}
-                                                            >
-                                                                Rejeitada
-                                                            </button>
+                                                        <td>
 
-                                                        )}
+                                                            {viagem.transportes?.join(
+                                                                ", "
+                                                            )
+                                                                ||
+                                                                "Não informado"
+                                                            }
 
-                                                    </td>
+                                                        </td>
 
-                                                </tr>
 
-                                            )
+                                                        {/* SITUAÇÃO */}
+
+                                                        <td>
+
+
+                                                            {viagem.status ===
+                                                            "REJEITADA" ? (
+
+
+                                                                <button
+                                                                    type="button"
+                                                                    className={`${classeStatus} status-button`}
+                                                                    onClick={(
+                                                                        event
+                                                                    ) =>
+                                                                        abrirJustificativa(
+                                                                            viagem,
+                                                                            event
+                                                                        )
+                                                                    }
+                                                                >
+
+                                                                    {textoStatus}
+
+                                                                </button>
+
+
+                                                            ) : (
+
+
+                                                                <span
+                                                                    className={
+                                                                        classeStatus
+                                                                    }
+                                                                >
+
+                                                                    {textoStatus}
+
+                                                                </span>
+
+                                                            )}
+
+
+                                                        </td>
+
+                                                    </tr>
+
+                                                );
+                                            }
                                         )}
 
                                     </tbody>
@@ -393,20 +922,28 @@ function ViagensSolicitadas() {
 
                     </section>
 
+
                 </main>
 
             </div>
 
 
+            {/* =====================================================
+                MODAL DE REJEIÇÃO
+            ===================================================== */}
+
             {justificativaSelecionada && (
 
                 <Modal
+
                     titulo="Justificativa da rejeição"
+
                     onClose={() =>
                         setJustificativaSelecionada(
                             null
                         )
                     }
+
                 >
 
                     <p>
@@ -420,5 +957,6 @@ function ViagensSolicitadas() {
         </div>
     );
 }
+
 
 export default ViagensSolicitadas;

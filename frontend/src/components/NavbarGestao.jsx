@@ -7,7 +7,7 @@ import {
     sair
 } from "../auth/auth";
 
-function Navbar() {
+function NavbarGestao() {
     const navigate = useNavigate();
 
     function encerrarSessao() {
@@ -30,44 +30,45 @@ function Navbar() {
 
             <nav className="menu">
                 <div className="menu-label">
-                    COLABORADOR
+                    GESTOR
                 </div>
 
                 <NavLink
-                    to="/"
+                    to="/gestao"
                     className={({ isActive }) =>
                         `menu-item ${
                             isActive ? "active" : ""
                         }`
                     }
                 >
-                    <span className="menu-icon">▣</span>
-                    <span>Minhas viagens</span>
+                    <span className="menu-icon">✓</span>
+                    <span>Gestão de viagens</span>
                 </NavLink>
 
                 <NavLink
-                    to="/nova-viagem"
+                    to="/dashboard"
                     className={({ isActive }) =>
                         `menu-item ${
                             isActive ? "active" : ""
                         }`
                     }
                 >
-                    <span className="menu-icon">+</span>
-                    <span>Nova viagem</span>
+                    
+                    <span className="menu-icon">▤</span>
+                    <span>Dashboard</span>
                 </NavLink>
 
-                <NavLink
-                    to="/viagens-solicitadas"
-                    className={({ isActive }) =>
-                        `menu-item ${
-                            isActive ? "active" : ""
-                        }`
-                    }
-                >
-                    <span className="menu-icon">≡</span>
-                    <span>Solicitações</span>
-                </NavLink>
+<NavLink
+    to="/cadastros"
+    className={({ isActive }) =>
+        `menu-item ${
+            isActive ? "active" : ""
+        }`
+    }
+>
+    <span className="menu-icon">⚙</span>
+    <span>Cadastros</span>
+</NavLink>
 
                 <div className="menu-separador" />
 
@@ -88,4 +89,4 @@ function Navbar() {
     );
 }
 
-export default Navbar;
+export default NavbarGestao;
