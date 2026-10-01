@@ -9,7 +9,7 @@ import {
 } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
-import Navbar from "../components/Navbar";
+import Navbar from "../components/NavbarGestao";
 
 import {
     buscarViagemPorId,
@@ -21,9 +21,9 @@ import {
 
 import "../styles/gestao.css";
 
-// Usuário gestor usado enquanto o login real não está implementado.
-// No banco de demonstração, o usuário 1 é o gestor Willian.
-const ID_GESTOR_TESTE = 1;
+import {
+    obterUsuarioLogado
+} from "../auth/auth";
 
 function formatarData(data) {
 
@@ -386,7 +386,8 @@ setHistorico(dadosHistorico || []);
     }
 
     const dados = {
-        idUsuarioResponsavel: ID_GESTOR_TESTE,
+        idUsuarioResponsavel:
+    obterUsuarioLogado().idUsuario,
         observacao: observacao.trim() || null
     };
 

@@ -1,21 +1,48 @@
+import {
+    obterUsuarioLogado
+} from "../auth/auth";
+
 function Header() {
-return ( <header className="topbar"> <div className="topbar-title"> <h1>Sistema de Gerenciamento de Viagens</h1> <span>Portal corporativo</span> </div>
+    const usuario =
+        obterUsuarioLogado();
 
+    const iniciais = usuario?.nome
+        ?.split(" ")
+        .slice(0, 2)
+        .map(parte => parte[0])
+        .join("") || "US";
 
-        <div className="usuario">
-            <div className="avatar">
-                FA
+    return (
+        <header className="topbar">
+            <div className="topbar-title">
+                <h1>
+                    Sistema de Gerenciamento de Viagens
+                </h1>
+
+                <span>
+                    Portal corporativo
+                </span>
             </div>
 
-            <div className="usuario-info">
-                <strong>Fernanda Alves</strong>
-                <span>Colaboradora</span>
+            <div className="usuario">
+                <div className="avatar">
+                    {iniciais}
+                </div>
+
+                <div className="usuario-info">
+                    <strong>
+                        {usuario?.nome || "Usuário"}
+                    </strong>
+
+                    <span>
+                        {usuario?.perfil === "GESTOR"
+                            ? "Gestor"
+                            : "Colaborador"}
+                    </span>
+                </div>
             </div>
-        </div>
-    </header>
-);
-
-
+        </header>
+    );
 }
 
 export default Header;

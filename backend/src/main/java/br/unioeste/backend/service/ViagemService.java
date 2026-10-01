@@ -383,6 +383,14 @@ public class ViagemService {
 
         return ViagemResponse.de(atualizada);
     }
+    private void validarGestor(Integer idUsuario) {
+
+    if (!usuarioRepository.isGestorAtual(idUsuario)) {
+        throw new RegraNegocioException(
+            "Somente usuários com cargo de GESTOR podem realizar esta ação."
+        );
+    }
+}
 public void solicitar(
     Integer idViagem,
     AcaoStatusViagemRequest request
@@ -414,7 +422,9 @@ public void cancelar(
 public void solicitarAjustes(
     Integer idViagem,
     AcaoStatusViagemRequest request
-) {
+)
+
+{ validarGestor(request.idUsuarioResponsavel());
     if (
         request.observacao() == null
         || request.observacao().isBlank()
@@ -437,7 +447,9 @@ public void solicitarAjustes(
 public void aprovar(
     Integer idViagem,
     AcaoStatusViagemRequest request
-) {
+)
+
+{ validarGestor(request.idUsuarioResponsavel());
     alterarStatus(
         idViagem,
         new AlterarStatusRequest(
@@ -451,7 +463,9 @@ public void aprovar(
 public void rejeitar(
     Integer idViagem,
     AcaoStatusViagemRequest request
-) {
+) 
+
+{ validarGestor(request.idUsuarioResponsavel());
     alterarStatus(
         idViagem,
         new AlterarStatusRequest(
