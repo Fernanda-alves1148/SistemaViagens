@@ -53,9 +53,22 @@ function NavbarGestao() {
                         }`
                     }
                 >
+                    
                     <span className="menu-icon">▤</span>
                     <span>Dashboard</span>
                 </NavLink>
+
+<NavLink
+    to="/cadastros"
+    className={({ isActive }) =>
+        `menu-item ${
+            isActive ? "active" : ""
+        }`
+    }
+>
+    <span className="menu-icon">⚙</span>
+    <span>Cadastros</span>
+</NavLink>
 
                 <div className="menu-separador" />
 
