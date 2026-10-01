@@ -15,6 +15,7 @@ import GestaoViagens from "./pages/GestaoViagens";
 import DespesasViagem from "./pages/DespesasViagem";
 import DetalhesGestaoViagem from "./pages/DetalhesGestaoViagem";
 import Dashboard from "./pages/Dashboard";
+import Cadastros from "./pages/Cadastros";
 
 function App() {
     return (
@@ -96,6 +97,15 @@ function App() {
                         </RotaProtegida>
                     }
                 />
+
+<Route
+    path="/cadastros"
+    element={
+        <RotaProtegida perfil="GESTOR">
+            <Cadastros />
+        </RotaProtegida>
+    }
+/>
 
                 <Route
                     path="*"
