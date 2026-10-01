@@ -18,8 +18,18 @@ function formatarData(data) {
     return `${dia}/${mes}/${ano}`;
 }
 
+function normalizarStatus(status) {
+    const normalizado = String(status || "")
+        .trim()
+        .toUpperCase();
+
+    return normalizado === "AJUSTES"
+        ? "AJUSTES_SOLICITADOS"
+        : normalizado;
+}
+
 function obterTextoStatus(status) {
-    switch (status) {
+    switch (normalizarStatus(status)) {
         case "RASCUNHO":
             return "Rascunho";
 
@@ -44,7 +54,7 @@ function obterTextoStatus(status) {
 }
 
 function obterClasseStatus(status) {
-    switch (status) {
+    switch (normalizarStatus(status)) {
         case "SOLICITADA":
             return "status analise";
 
@@ -134,30 +144,28 @@ function GestaoViagens() {
      * INDICADORES
      * ==========================================
      */
-
-    const quantidadeTotal =
-        viagens.length;
+const quantidadeTotal = viagens.length;
 
     const quantidadeAnalise =
-        viagens.filter(
-            (viagem) =>
-                viagem.status ===
-                "SOLICITADA"
-        ).length;
+    viagens.filter(
+        (viagem) =>
+            normalizarStatus(viagem.status) ===
+            "SOLICITADA"
+    ).length;
 
-    const quantidadeAprovadas =
-        viagens.filter(
-            (viagem) =>
-                viagem.status ===
-                "APROVADA"
-        ).length;
+const quantidadeAprovadas =
+    viagens.filter(
+        (viagem) =>
+            normalizarStatus(viagem.status) ===
+            "APROVADA"
+    ).length;
 
-    const quantidadeRejeitadas =
-        viagens.filter(
-            (viagem) =>
-                viagem.status ===
-                "REJEITADA"
-        ).length;
+const quantidadeRejeitadas =
+    viagens.filter(
+        (viagem) =>
+            normalizarStatus(viagem.status) ===
+            "REJEITADA"
+    ).length;
 
 
     /*
@@ -171,9 +179,9 @@ function GestaoViagens() {
             (viagem) => {
 
                 const correspondeStatus =
-                    filtroStatus === "TODAS" ||
-                    viagem.status ===
-                        filtroStatus;
+    filtroStatus === "TODAS" ||
+    normalizarStatus(viagem.status) ===
+        filtroStatus;
 
 
                 const destino =
