@@ -128,8 +128,17 @@ function DetalhesViagem() {
     const [viagem, setViagem] =
         useState(null);
 
-    const [historico, setHistorico] =
-        useState([]);
+
+const [historico, setHistorico] =
+    useState([]);
+
+const [custos, setCustos] =
+    useState({
+        deslocamento: 0,
+        hospedagem: 0,
+        taxi: 0,
+        total: 0
+    });
 
     const [carregando, setCarregando] =
         useState(true);
@@ -158,6 +167,33 @@ function DetalhesViagem() {
 
                 setViagem(dadosViagem);
 
+                try {
+    const dadosCustos =
+        await buscarCustosViagem(id);
+
+    setCustos(
+        dadosCustos || {
+            deslocamento: 0,
+            hospedagem: 0,
+            taxi: 0,
+            total: 0
+        }
+    );
+
+} catch (erroCustos) {
+
+    console.error(
+        "Erro ao carregar custos:",
+        erroCustos
+    );
+
+    setCustos({
+        deslocamento: 0,
+        hospedagem: 0,
+        taxi: 0,
+        total: 0
+    });
+}
 
                 /*
                  * O histórico possui um endpoint
@@ -337,18 +373,8 @@ function DetalhesViagem() {
      * de despesas quando adaptarmos essa tela.
      */
 
-    const despesas = [];
-
-
     const totalDespesas =
-        despesas.reduce(
-            (total, despesa) =>
-                total +
-                Number(
-                    despesa.valor || 0
-                ),
-            0
-        );
+    Number(custos?.total || 0);
 
 
     /*
