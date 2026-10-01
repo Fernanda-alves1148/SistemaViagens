@@ -12,11 +12,18 @@ import Header from "../components/Header.jsx";
 import Navbar from "../components/Navbar";
 
 import {
-    buscarViagemPorId
+    buscarViagemPorId,
+    listarHistoricoViagem,
+    aprovarViagem,
+    rejeitarViagem,
+    solicitarAjustesViagem
 } from "../services/viagemService";
 
 import "../styles/gestao.css";
 
+// Usuário gestor usado enquanto o login real não está implementado.
+// No banco de demonstração, o usuário 1 é o gestor Willian.
+const ID_GESTOR_TESTE = 1;
 
 function formatarData(data) {
 
@@ -37,13 +44,42 @@ function formatarDataHora(data) {
         return "-";
     }
 
-    return data;
+    const dataConvertida =
+        new Date(data);
+
+    if (
+        Number.isNaN(
+            dataConvertida.getTime()
+        )
+    ) {
+        return data;
+    }
+
+    return dataConvertida.toLocaleString(
+        "pt-BR"
+    );
 }
 
+function normalizarStatus(status) {
+
+    const valor = String(
+        status || ""
+    )
+        .trim()
+        .toUpperCase();
+
+    // No banco o status é "Ajustes", enquanto
+    // o frontend usa "AJUSTES_SOLICITADOS".
+    if (valor === "AJUSTES") {
+        return "AJUSTES_SOLICITADOS";
+    }
+
+    return valor;
+}
 
 function obterTextoStatus(status) {
 
-    switch (status) {
+    switch (normalizarStatus(status)) {
 
         case "RASCUNHO":
             return "Rascunho";
@@ -71,7 +107,7 @@ function obterTextoStatus(status) {
 
 function obterClasseStatus(status) {
 
-    switch (status) {
+    switch (normalizarStatus(status)) {
 
         case "SOLICITADA":
             return "status analise";
@@ -109,8 +145,17 @@ function DetalhesGestaoViagem() {
     /*
      * Viagem recebida do backend.
      */
-    const [viagem, setViagem] =
-        useState(null);
+    /*
+ * Viagem recebida do backend.
+ */
+const [viagem, setViagem] =
+    useState(null);
+
+/*
+ * Histórico de alterações da viagem.
+ */
+const [historico, setHistorico] =
+    useState([]);
 
 
     /*
@@ -140,6 +185,8 @@ function DetalhesGestaoViagem() {
     const [mensagem, setMensagem] =
         useState("");
 
+    const [processando, setProcessando] =
+    useState(false);
 
     /*
      * Busca a viagem real no backend.
@@ -156,10 +203,16 @@ function DetalhesGestaoViagem() {
 
                 setErro("");
 
-                const dados =
-                    await buscarViagemPorId(id);
+                const [
+    dadosViagem,
+    dadosHistorico
+] = await Promise.all([
+    buscarViagemPorId(id),
+    listarHistoricoViagem(id)
+]);
 
-                setViagem(dados);
+setViagem(dadosViagem);
+setHistorico(dadosHistorico || []);
 
             } catch (error) {
 
@@ -279,22 +332,9 @@ function DetalhesGestaoViagem() {
      * do gestor.
      */
     const podeDecidir =
-        viagem.status === "SOLICITADA";
+    normalizarStatus(viagem.status) ===
+    "SOLICITADA";
 
-
-    /*
-     * IMPORTANTE:
-     *
-     * O ViagemResponse NÃO possui histórico.
-     *
-     * O histórico será buscado posteriormente
-     * pelo endpoint:
-     *
-     * GET /api/viagens/{id}/historico
-     *
-     * Por enquanto deixamos vazio.
-     */
-    const historico = [];
 
 
     function iniciarAcao(tipo) {
@@ -318,10 +358,7 @@ function DetalhesGestaoViagem() {
 
 
     /*
-     * POR ENQUANTO:
      *
-     * Esta função ainda não envia a decisão
-     * para o backend.
      *
      * O backend exige:
      *
@@ -330,49 +367,80 @@ function DetalhesGestaoViagem() {
      * Ainda precisamos descobrir de onde
      * o frontend obtém o ID do gestor logado.
      */
-    function confirmarAcao() {
 
-        if (
-            acao === "rejeitar" ||
-            acao === "ajustes"
-        ) {
+        async function confirmarAcao() {
 
-            if (!observacao.trim()) {
+    if (
+        acao === "rejeitar" ||
+        acao === "ajustes"
+    ) {
+        if (!observacao.trim()) {
+            setMensagem(
+                acao === "rejeitar"
+                    ? "Informe a justificativa da rejeição."
+                    : "Informe quais ajustes o colaborador deverá realizar."
+            );
 
-                setMensagem(
-                    acao === "rejeitar"
-                        ? "Informe a justificativa da rejeição."
-                        : "Informe quais ajustes o colaborador deverá realizar."
-                );
-
-                return;
-            }
+            return;
         }
+    }
 
+    const dados = {
+        idUsuarioResponsavel: ID_GESTOR_TESTE,
+        observacao: observacao.trim() || null
+    };
+
+    try {
+        setProcessando(true);
+        setMensagem("");
 
         if (acao === "aprovar") {
-
-            setMensagem(
-                "A aprovação será conectada ao backend na próxima etapa."
-            );
-
+            await aprovarViagem(id, dados);
         } else if (acao === "rejeitar") {
-
-            setMensagem(
-                "A rejeição será conectada ao backend na próxima etapa."
-            );
-
+            await rejeitarViagem(id, dados);
         } else if (acao === "ajustes") {
-
-            setMensagem(
-                "A solicitação de ajustes será conectada ao backend na próxima etapa."
-            );
+            await solicitarAjustesViagem(id, dados);
+        } else {
+            return;
         }
 
-        setAcao(null);
+        const [
+    viagemAtualizada,
+    historicoAtualizado
+] = await Promise.all([
+    buscarViagemPorId(id),
+    listarHistoricoViagem(id)
+]);
 
+setViagem(viagemAtualizada);
+setHistorico(historicoAtualizado || []);
+
+        const mensagensSucesso = {
+            aprovar: "Viagem aprovada com sucesso.",
+            rejeitar: "Viagem rejeitada com sucesso.",
+            ajustes: "Viagem devolvida para ajustes."
+        };
+
+        setAcao(null);
         setObservacao("");
+        setMensagem(mensagensSucesso[acao]);
+
+    } catch (error) {
+        console.error(
+            "Erro ao registrar decisão:",
+            error
+        );
+
+        setMensagem(
+            error.message ||
+            "Não foi possível registrar a decisão."
+        );
+
+    } finally {
+        setProcessando(false);
     }
+}
+    
 
 
     return (
@@ -794,7 +862,7 @@ function DetalhesGestaoViagem() {
                                                     <span>
                                                         {
                                                             formatarDataHora(
-                                                                item.data
+                                                                item.dataAlteracao
                                                             )
                                                         }
                                                     </span>
@@ -802,7 +870,7 @@ function DetalhesGestaoViagem() {
                                                     <p>
                                                         Responsável:{" "}
                                                         {
-                                                            item.responsavel
+                                                            item.nomeResponsavel || item.loginResponsavel
                                                         }
                                                     </p>
 
@@ -994,36 +1062,33 @@ function DetalhesGestaoViagem() {
 
 
                                 <button
-                                    type="button"
-                                    className="botao-secundario"
-                                    onClick={
-                                        cancelarAcao
-                                    }
-                                >
-                                    Cancelar
-                                </button>
+    type="button"
+    className="botao-secundario"
+    onClick={cancelarAcao}
+    disabled={processando}
+>
+    Cancelar
+</button>
 
 
-                                <button
-                                    type="button"
-                                    className={
-                                        acao ===
-                                        "rejeitar"
-                                            ? "botao-cancelar"
-                                            : "botao-destaque"
-                                    }
-                                    onClick={
-                                        confirmarAcao
-                                    }
-                                >
-
-                                    {acao === "rejeitar"
-                                        ? "Confirmar rejeição"
-                                        : acao === "ajustes"
-                                            ? "Enviar para ajustes"
-                                            : "Confirmar aprovação"}
-
-                                </button>
+<button
+    type="button"
+    className={
+        acao === "rejeitar"
+            ? "botao-cancelar"
+            : "botao-destaque"
+    }
+    onClick={confirmarAcao}
+    disabled={processando}
+>
+    {processando
+        ? "Processando..."
+        : acao === "rejeitar"
+            ? "Confirmar rejeição"
+            : acao === "ajustes"
+                ? "Enviar para ajustes"
+                : "Confirmar aprovação"}
+</button>
 
                             </div>
 

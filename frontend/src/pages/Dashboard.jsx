@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../components/Header.jsx";
-import NavbarGestao from "../components/NavbarGestao.jsx";
+import Navbar from "../components/Navbar";
 
 import { listarViagens } from "../services/viagemService";
+
+import {
+    buscarDashboard
+} from "../services/financeiroService.jsx";
 
 import "../styles/Dashboard.css";
 
@@ -79,6 +83,15 @@ function Dashboard() {
     const [viagens, setViagens] =
         useState([]);
 
+    const [indicadores, setIndicadores] =
+    useState({
+        totalViagens: 0,
+        viagensAprovadas: 0,
+        viagensRejeitadas: 0,
+        custoTotal: 0,
+        custoMedioPorViagem: 0
+    });
+
     const [carregando, setCarregando] =
         useState(true);
 
@@ -95,12 +108,27 @@ function Dashboard() {
                 setCarregando(true);
                 setErro("");
 
-                const resposta =
-                    await listarViagens();
+                const [
+    respostaViagens,
+    respostaDashboard
+] = await Promise.all([
+    listarViagens(),
+    buscarDashboard()
+]);
 
-                setViagens(
-                    resposta || []
-                );
+setViagens(
+    respostaViagens || []
+);
+
+setIndicadores(
+    respostaDashboard || {
+        totalViagens: 0,
+        viagensAprovadas: 0,
+        viagensRejeitadas: 0,
+        custoTotal: 0,
+        custoMedioPorViagem: 0
+    }
+);
 
             } catch (error) {
 
@@ -129,45 +157,44 @@ function Dashboard() {
 
 
     const quantidadeTotal =
-        viagens.length;
+    Number(
+        indicadores.totalViagens ||
+        viagens.length
+    );
 
+const quantidadeAnalise =
+    viagens.filter(
+        (viagem) =>
+            normalizarStatus(viagem.status) ===
+            "SOLICITADA"
+    ).length;
 
-    const quantidadeAnalise =
-        viagens.filter(
-            (viagem) =>
-                viagem.status ===
-                "SOLICITADA"
-        ).length;
+const quantidadeAprovadas =
+    Number(
+        indicadores.viagensAprovadas || 0
+    );
 
+const quantidadeRejeitadas =
+    Number(
+        indicadores.viagensRejeitadas || 0
+    );
 
-    const quantidadeAprovadas =
-        viagens.filter(
-            (viagem) =>
-                viagem.status ===
-                "APROVADA"
-        ).length;
+const quantidadeRascunhos =
+    viagens.filter(
+        (viagem) =>
+            normalizarStatus(viagem.status) ===
+            "RASCUNHO"
+    ).length;
 
+const totalGasto =
+    Number(
+        indicadores.custoTotal || 0
+    );
 
-    const quantidadeRejeitadas =
-        viagens.filter(
-            (viagem) =>
-                viagem.status ===
-                "REJEITADA"
-        ).length;
-
-
-    /*
-     * As despesas ainda não estão disponíveis
-     * no ViagemResponse do backend.
-     *
-     * Por isso, estes indicadores permanecem
-     * zerados até implementarmos o módulo
-     * de despesas no backend.
-     */
-
-    const totalGasto = 0;
-
-    const custoMedio = 0;
+const custoMedio =
+    Number(
+        indicadores.custoMedioPorViagem || 0
+    );
 
     const destinoMaisVisitado =
         viagens.length > 0
@@ -225,7 +252,13 @@ function Dashboard() {
     const gastosPorDestino = [];
 
     const maioresGastos = [];
-
+    
+    function normalizarStatus(status) {
+    return String(status || "")
+        .trim()
+        .toUpperCase()
+        .replaceAll(" ", "_");
+}
 
     /*
      * Dados do gráfico de rosca.
@@ -255,16 +288,6 @@ function Dashboard() {
                 baseCalculo) *
             100
     };
-
-
-    const quantidadeRascunhos =
-        Math.max(
-            quantidadeTotal -
-                quantidadeAprovadas -
-                quantidadeAnalise -
-                quantidadeRejeitadas,
-            0
-        );
 
 
     percentuais.rascunhos =
@@ -328,7 +351,7 @@ function Dashboard() {
 
             <div className="app">
 
-                <NavbarGestao />
+                <Navbar />
 
                 <div className="main-area">
 
@@ -369,7 +392,7 @@ function Dashboard() {
 
             <div className="app">
 
-                <NavbarGestao />
+                <Navbar />
 
                 <div className="main-area">
 
@@ -417,7 +440,7 @@ function Dashboard() {
 
         <div className="app">
 
-            <NavbarGestao />
+            <Navbar />
 
             <div className="main-area">
 

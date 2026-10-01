@@ -796,8 +796,9 @@ function NovaViagem() {
             matriculaSolicitante:
                 matriculaSolicitante.trim(),
 
-            idMeioTransporte:
-                Number(meioTransporteId)
+           idsMeiosTransporte: [
+    Number(meioTransporteId)
+]
 
         };
     }

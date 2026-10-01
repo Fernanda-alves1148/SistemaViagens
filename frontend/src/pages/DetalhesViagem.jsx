@@ -16,6 +16,10 @@ import {
     listarHistoricoViagem
 } from "../services/viagemService";
 
+import {
+    buscarCustosViagem
+} from "../services/financeiroService.jsx";
+
 import "../styles/viagens.css";
 
 
@@ -31,6 +35,27 @@ function formatarData(data) {
     return `${dia}/${mes}/${ano}`;
 }
 
+function formatarDataHora(data) {
+
+    if (!data) {
+        return "Data não informada";
+    }
+
+    const dataConvertida =
+        new Date(data);
+
+    if (
+        Number.isNaN(
+            dataConvertida.getTime()
+        )
+    ) {
+        return data;
+    }
+
+    return dataConvertida.toLocaleString(
+        "pt-BR"
+    );
+}
 
 function formatarMoeda(valor) {
 
@@ -103,8 +128,17 @@ function DetalhesViagem() {
     const [viagem, setViagem] =
         useState(null);
 
-    const [historico, setHistorico] =
-        useState([]);
+
+const [historico, setHistorico] =
+    useState([]);
+
+const [custos, setCustos] =
+    useState({
+        deslocamento: 0,
+        hospedagem: 0,
+        taxi: 0,
+        total: 0
+    });
 
     const [carregando, setCarregando] =
         useState(true);
@@ -133,6 +167,33 @@ function DetalhesViagem() {
 
                 setViagem(dadosViagem);
 
+                try {
+    const dadosCustos =
+        await buscarCustosViagem(id);
+
+    setCustos(
+        dadosCustos || {
+            deslocamento: 0,
+            hospedagem: 0,
+            taxi: 0,
+            total: 0
+        }
+    );
+
+} catch (erroCustos) {
+
+    console.error(
+        "Erro ao carregar custos:",
+        erroCustos
+    );
+
+    setCustos({
+        deslocamento: 0,
+        hospedagem: 0,
+        taxi: 0,
+        total: 0
+    });
+}
 
                 /*
                  * O histórico possui um endpoint
@@ -312,18 +373,8 @@ function DetalhesViagem() {
      * de despesas quando adaptarmos essa tela.
      */
 
-    const despesas = [];
-
-
     const totalDespesas =
-        despesas.reduce(
-            (total, despesa) =>
-                total +
-                Number(
-                    despesa.valor || 0
-                ),
-            0
-        );
+    Number(custos?.total || 0);
 
 
     /*
@@ -332,13 +383,17 @@ function DetalhesViagem() {
      * ==========================================
      */
 
-    const podeAlterar =
-        viagem.status !== "APROVADA";
+const statusNormalizado =
+    String(viagem.status || "")
+        .trim()
+        .toUpperCase();
 
+const podeAlterar =
+    statusNormalizado === "RASCUNHO" ||
+    statusNormalizado === "AJUSTES_SOLICITADOS";
 
-    const podeRegistrarDespesas =
-        viagem.status === "APROVADA";
-
+const podeRegistrarDespesas =
+    statusNormalizado === "APROVADA";
 
     return (
 
@@ -652,24 +707,27 @@ function DetalhesViagem() {
                                                 <div className="historico-conteudo">
 
                                                     <strong>
-                                                        {
-                                                            item.status
-                                                        }
-                                                    </strong>
+    {item.status}
+</strong>
 
-                                                    <span>
-                                                        {item.data
-                                                            ? formatarData(
-                                                                item.data
-                                                            )
-                                                            : "Data não informada"}
-                                                    </span>
+<span>
+    {formatarDataHora(
+        item.dataAlteracao
+    )}
+</span>
 
-                                                    <p>
-                                                        {
-                                                            item.descricao
-                                                        }
-                                                    </p>
+<p>
+    Responsável:{" "}
+    {item.nomeResponsavel ||
+        item.loginResponsavel ||
+        "Não informado"}
+</p>
+
+{item.observacao && (
+    <p>
+        {item.observacao}
+    </p>
+)}
 
                                                 </div>
 
